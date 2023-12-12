@@ -13,7 +13,10 @@ macro(build_libtorch)
     GIT_REPOSITORY https://github.com/pytorch/pytorch.git
     GIT_TAG v2.1.0
     GIT_SUBMODULES_RECURSE TRUE
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install -DBUILD_SHARED_LIBS:BOOL=ON
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install \
+      -DBUILD_SHARED_LIBS:BOOL=ON \
+      -DUSE_CUDA=ON \
+      -DCMAKE_CUDA_FLAGS="-gencode arch=compute_87,code=[sm_87,compute_87]"
     BUILD_COMMAND make -j24
   )
   install(
