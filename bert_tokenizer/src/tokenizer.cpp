@@ -127,7 +127,7 @@ bool _is_punctuation(char letter)
   return false;
 }
 
-std::string BasicTokenizer::_clean_text(std::string text)
+std::string BasicTokenizer::_clean_text(std::string text) const
 {
   std::string output;
   int len = 0;
@@ -145,7 +145,7 @@ std::string BasicTokenizer::_clean_text(std::string text)
   return output;
 }
 
-vector<std::string> BasicTokenizer::_run_split_on_punc(std::string text)
+vector<std::string> BasicTokenizer::_run_split_on_punc(std::string text) const
 {
   // vector<std::string> never_split = {"[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"};
   if (find(never_split_.begin(), never_split_.end(), text) != never_split_.end()) {
@@ -188,7 +188,7 @@ vector<std::string> BasicTokenizer::_run_split_on_punc(std::string text)
   return final_output;
 }
 
-std::string BasicTokenizer::_run_strip_accents(std::string text)
+std::string BasicTokenizer::_run_strip_accents(std::string text) const
 {
   wstring_convert<codecvt_utf8<char32_t>, char32_t> conv;
   auto temp = conv.from_bytes(text);
@@ -222,7 +222,7 @@ std::string BasicTokenizer::_run_strip_accents(std::string text)
   return output;
 }
 
-std::string BasicTokenizer::utf8chr(int cp)
+std::string BasicTokenizer::utf8chr(int cp) const
 {
   char c[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
   if (cp <= 0x7F) {
@@ -245,7 +245,7 @@ std::string BasicTokenizer::utf8chr(int cp)
   return std::string(c);
 }
 
-std::string BasicTokenizer::_tokenize_chinese_chars(std::string text)
+std::string BasicTokenizer::_tokenize_chinese_chars(std::string text) const
 {
   auto && utf8_text = text;
   u8_to_u32_iterator<std::string::iterator> tbegin(utf8_text.begin()), tend(utf8_text.end());
@@ -267,7 +267,7 @@ std::string BasicTokenizer::_tokenize_chinese_chars(std::string text)
   return output;
 }
 
-bool BasicTokenizer::_is_chinese_char(int cp)
+bool BasicTokenizer::_is_chinese_char(int cp) const
 {
   if (
     (cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0x3400 && cp <= 0x4DBF) ||
@@ -284,7 +284,7 @@ bool BasicTokenizer::_is_chinese_char(int cp)
     return false;
 }
 
-vector<std::string> BasicTokenizer::tokenize(std::string text)
+vector<std::string> BasicTokenizer::tokenize(std::string text) const
 {
   //    text = _clean_text(text);
   text = _tokenize_chinese_chars(text);
@@ -349,7 +349,7 @@ void WordpieceTokenizer::add_vocab(std::map<std::string, int> vocab)
   max_input_chars_per_word_ = 100;
 }
 
-vector<std::string> WordpieceTokenizer::tokenize(std::string text)
+vector<std::string> WordpieceTokenizer::tokenize(std::string text) const
 {
   vector<std::string> output_tokens;
   vector<std::string> whitespace_tokens = whitespace_tokenize(text);
@@ -409,7 +409,7 @@ void BertTokenizer::add_vocab(const char * vocab_file)
   maxlen_ = 512;
 }
 
-vector<std::string> BertTokenizer::tokenize(std::string text)
+vector<std::string> BertTokenizer::tokenize(std::string text) const
 {
   vector<std::string> split_tokens;
   if (do_basic_tokenize_) {
@@ -425,12 +425,15 @@ vector<std::string> BertTokenizer::tokenize(std::string text)
   return split_tokens;
 }
 
-vector<float> BertTokenizer::convert_tokens_to_ids(vector<std::string> tokens)
+vector<float> BertTokenizer::convert_tokens_to_ids(vector<std::string> tokens) const
 {
   vector<float> ids;
-  vector<std::string>::iterator ptr;
-  for (ptr = tokens.begin(); ptr < tokens.end(); ptr++) {
-    ids.push_back(float(vocab[*ptr]));
+  // vector<std::string>::iterator ptr;
+  // for (ptr = tokens.begin(); ptr < tokens.end(); ptr++) {
+  //   ids.push_back(float(vocab[*ptr]));
+  // }
+  for (const auto & token : tokens) {
+    ids.push_back(float(vocab.at(token)));
   }
   if (ids.size() > maxlen_)
     cout << "Token indices sequence length is longer than the specified maximum";
@@ -439,7 +442,7 @@ vector<float> BertTokenizer::convert_tokens_to_ids(vector<std::string> tokens)
 
 void BertTokenizer::encode(
   std::string textA, std::string textB, vector<float> & input_ids, vector<float> & input_mask,
-  vector<float> & segment_ids, size_t max_seq_length, const char * truncation_strategy)
+  vector<float> & segment_ids, size_t max_seq_length, const char * truncation_strategy) const
 {
   BasicTokenizer basictokenizer;
   vector<std::string> tokens_A;

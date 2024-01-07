@@ -16,7 +16,10 @@
 
 #include <bert_tokenizer/tokenizer.hpp>
 
-TEST(BERT, tokenize) { BertTokenizer tokenizer; }
+TEST(BERT, tokenize)
+{
+  const auto tokenizer = BertTokenizer(BertTokenizer::PretrainedVocabFile::BERT_BASE_UNCASED);
+}
 
 int main(int argc, char ** argv)
 {

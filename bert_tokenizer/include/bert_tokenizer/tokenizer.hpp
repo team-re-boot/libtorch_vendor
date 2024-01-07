@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -34,19 +36,19 @@ public:
     never_split_ = never_split;
   }
 
-  std::string _clean_text(std::string text);
+  std::string _clean_text(std::string text) const;
 
-  std::vector<std::string> _run_split_on_punc(std::string text);
+  std::vector<std::string> _run_split_on_punc(std::string text) const;
 
-  std::string _run_strip_accents(std::string text);
+  std::string _run_strip_accents(std::string text) const;
 
-  std::string _tokenize_chinese_chars(std::string text);
+  std::string _tokenize_chinese_chars(std::string text) const;
 
-  std::string utf8chr(int cp);
+  std::string utf8chr(int cp) const;
 
-  bool _is_chinese_char(int cp);
+  bool _is_chinese_char(int cp) const;
 
-  std::vector<std::string> tokenize(std::string text);
+  std::vector<std::string> tokenize(std::string text) const;
 
   void truncate_sequences(
     std::vector<std::string> & textA, std::vector<std::string> & textB,
@@ -73,12 +75,13 @@ public:
 
   void add_vocab(std::map<std::string, int> vocab);
 
-  std::vector<std::string> tokenize(std::string text);
+  std::vector<std::string> tokenize(std::string text) const;
 };
 
 class BertTokenizer
 {
 public:
+  enum class PretrainedVocabFile { BERT_BASE_UNCASED };
   std::map<std::string, int> vocab;
   std::map<int, std::string> ids_to_tokens;
   bool do_lower_case_;
@@ -87,9 +90,22 @@ public:
   BasicTokenizer basic_tokenizer;
   WordpieceTokenizer wordpiece_tokenizer;
 
-  BertTokenizer(){};
+  explicit BertTokenizer(const PretrainedVocabFile & vocab)
+  {
+    const auto vocab_file = [](const auto & vocab) {
+      switch (vocab) {
+        case PretrainedVocabFile::BERT_BASE_UNCASED:
+          return "bert-base-uncased-vocab.txt";
+      }
+      throw std::runtime_error("Error, please specify valid vocab file.");
+    }(vocab);
+    add_vocab(
+      std::string(
+        ament_index_cpp::get_package_share_directory("bert_tokenizer") + "/vocab/" + vocab_file)
+        .c_str());
+  }
 
-  BertTokenizer(
+  explicit BertTokenizer(
     const char * vocab_file, bool do_lower_case = false, int max_len = 512,
     bool do_basic_tokenize = true,
     std::vector<std::string> /*never_split*/ = {"[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"})
@@ -103,14 +119,15 @@ public:
     maxlen_ = max_len;
   }
 
-  void add_vocab(const char * vocab_file);
+  std::vector<std::string> tokenize(std::string text) const;
 
-  std::vector<std::string> tokenize(std::string text);
-
-  std::vector<float> convert_tokens_to_ids(std::vector<std::string> tokens);
+  std::vector<float> convert_tokens_to_ids(std::vector<std::string> tokens) const;
 
   void encode(
     std::string textA, std::string textB, std::vector<float> & input_ids,
     std::vector<float> & input_mask, std::vector<float> & segment_ids, size_t max_seq_length = 512,
-    const char * truncation_strategy = "longest_first");
+    const char * truncation_strategy = "longest_first") const;
+
+private:
+  void add_vocab(const char * vocab_file);
 };
