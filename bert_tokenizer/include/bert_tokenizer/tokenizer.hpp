@@ -36,11 +36,11 @@ public:
     never_split_ = never_split;
   }
 
-  std::string _clean_text(std::string text) const;
+  std::string _clean_text(const std::string & text) const;
 
-  std::vector<std::string> _run_split_on_punc(std::string text) const;
+  std::vector<std::string> _run_split_on_punc(const std::string & text) const;
 
-  std::string _run_strip_accents(std::string text) const;
+  std::string _run_strip_accents(const std::string & text) const;
 
   std::string _tokenize_chinese_chars(std::string text) const;
 
@@ -52,7 +52,7 @@ public:
 
   void truncate_sequences(
     std::vector<std::string> & textA, std::vector<std::string> & textB,
-    const char * truncation_strategy, size_t max_seq_length);
+    const char * truncation_strategy, size_t max_seq_length) const;
 };
 
 class WordpieceTokenizer
@@ -73,7 +73,7 @@ public:
     max_input_chars_per_word_ = max_input_chars_per_word;
   }
 
-  void add_vocab(std::map<std::string, int> vocab);
+  void add_vocab(const std::map<std::string, int> & vocab);
 
   std::vector<std::string> tokenize(const std::string & text) const;
 };
@@ -108,7 +108,8 @@ public:
   explicit BertTokenizer(
     const char * vocab_file, bool do_lower_case = false, int max_len = 512,
     bool do_basic_tokenize = true,
-    std::vector<std::string> /*never_split*/ = {"[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"})
+    const std::vector<std::string> & /*never_split*/ = {
+      "[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"})
   {
     vocab = read_vocab(vocab_file);
     for (std::map<std::string, int>::iterator i = vocab.begin(); i != vocab.end(); ++i)
@@ -120,12 +121,12 @@ public:
   }
 
   void encode(
-    std::string textA, std::string textB, std::vector<float> & input_ids,
+    const std::string & textA, const std::string & textB, std::vector<float> & input_ids,
     std::vector<float> & input_mask, std::vector<float> & segment_ids, size_t max_seq_length = 512,
     const char * truncation_strategy = "longest_first") const;
 
 private:
   void add_vocab(const char * vocab_file);
   std::vector<std::string> tokenize(const std::string & text) const;
-  std::vector<float> convert_tokens_to_ids(std::vector<std::string> tokens) const;
+  std::vector<float> convert_tokens_to_ids(const std::vector<std::string> & tokens) const;
 };

@@ -132,7 +132,7 @@ bool _is_punctuation(char letter)
   return false;
 }
 
-std::string BasicTokenizer::_clean_text(std::string text) const
+std::string BasicTokenizer::_clean_text(const std::string & text) const
 {
   std::string output;
   int len = 0;
@@ -150,7 +150,7 @@ std::string BasicTokenizer::_clean_text(std::string text) const
   return output;
 }
 
-std::vector<std::string> BasicTokenizer::_run_split_on_punc(std::string text) const
+std::vector<std::string> BasicTokenizer::_run_split_on_punc(const std::string & text) const
 {
   // vector<std::string> never_split = {"[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"};
   if (find(never_split_.begin(), never_split_.end(), text) != never_split_.end()) {
@@ -193,7 +193,7 @@ std::vector<std::string> BasicTokenizer::_run_split_on_punc(std::string text) co
   return final_output;
 }
 
-std::string BasicTokenizer::_run_strip_accents(std::string text) const
+std::string BasicTokenizer::_run_strip_accents(const std::string & text) const
 {
   std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
   auto temp = conv.from_bytes(text);
@@ -292,8 +292,7 @@ bool BasicTokenizer::_is_chinese_char(int cp) const
 std::vector<std::string> BasicTokenizer::tokenize(const std::string & text) const
 {
   //    text = _clean_text(text);
-  //    text = _tokenize_chinese_chars(text); /// Currently, I will not support chinise, so comment out this line and reduce copy.
-  std::vector<std::string> orig_tokens = whitespace_tokenize(text);
+  std::vector<std::string> orig_tokens = whitespace_tokenize(_tokenize_chinese_chars(text));
   std::vector<std::string> split_tokens;
   std::vector<std::string>::iterator itr;
   for (itr = orig_tokens.begin(); itr < orig_tokens.end(); itr++) {
@@ -318,7 +317,7 @@ std::vector<std::string> BasicTokenizer::tokenize(const std::string & text) cons
 
 void BasicTokenizer::truncate_sequences(
   std::vector<std::string> & tokens_A, std::vector<std::string> & tokens_B,
-  const char * truncation_strategy = "longest_first", size_t max_seq_length = 509)
+  const char * truncation_strategy = "longest_first", size_t max_seq_length = 509) const
 {
   size_t length = tokens_A.size() + tokens_B.size();
   if (strcmp(truncation_strategy, "longest_first") == 0) {
@@ -347,7 +346,7 @@ void BasicTokenizer::truncate_sequences(
   }
 }
 
-void WordpieceTokenizer::add_vocab(std::map<std::string, int> vocab)
+void WordpieceTokenizer::add_vocab(const std::map<std::string, int> & vocab)
 {
   vocab_ = vocab;
   unk_token_ = "[UNK]";
@@ -430,7 +429,8 @@ std::vector<std::string> BertTokenizer::tokenize(const std::string & text) const
   return split_tokens;
 }
 
-std::vector<float> BertTokenizer::convert_tokens_to_ids(std::vector<std::string> tokens) const
+std::vector<float> BertTokenizer::convert_tokens_to_ids(
+  const std::vector<std::string> & tokens) const
 {
   std::vector<float> ids;
   // vector<std::string>::iterator ptr;
@@ -446,7 +446,7 @@ std::vector<float> BertTokenizer::convert_tokens_to_ids(std::vector<std::string>
 }
 
 void BertTokenizer::encode(
-  std::string textA, std::string textB, std::vector<float> & input_ids,
+  const std::string & textA, const std::string & textB, std::vector<float> & input_ids,
   std::vector<float> & input_mask, std::vector<float> & segment_ids, size_t max_seq_length,
   const char * truncation_strategy) const
 {
