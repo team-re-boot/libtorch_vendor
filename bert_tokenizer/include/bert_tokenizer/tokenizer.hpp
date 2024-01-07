@@ -48,7 +48,7 @@ public:
 
   bool _is_chinese_char(int cp) const;
 
-  std::vector<std::string> tokenize(std::string text) const;
+  std::vector<std::string> tokenize(const std::string & text) const;
 
   void truncate_sequences(
     std::vector<std::string> & textA, std::vector<std::string> & textB,
@@ -75,7 +75,7 @@ public:
 
   void add_vocab(std::map<std::string, int> vocab);
 
-  std::vector<std::string> tokenize(std::string text) const;
+  std::vector<std::string> tokenize(const std::string & text) const;
 };
 
 class BertTokenizer
@@ -119,10 +119,6 @@ public:
     maxlen_ = max_len;
   }
 
-  std::vector<std::string> tokenize(std::string text) const;
-
-  std::vector<float> convert_tokens_to_ids(std::vector<std::string> tokens) const;
-
   void encode(
     std::string textA, std::string textB, std::vector<float> & input_ids,
     std::vector<float> & input_mask, std::vector<float> & segment_ids, size_t max_seq_length = 512,
@@ -130,4 +126,6 @@ public:
 
 private:
   void add_vocab(const char * vocab_file);
+  std::vector<std::string> tokenize(const std::string & text) const;
+  std::vector<float> convert_tokens_to_ids(std::vector<std::string> tokens) const;
 };
