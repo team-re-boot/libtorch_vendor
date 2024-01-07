@@ -12,121 +12,169 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/// This code comes from https://gist.github.com/luistung/ace4888cf5fd1bad07844021cb2c7ecf
+
+#include <utf8proc.h>
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <map>
-#include <stdexcept>
+#include <boost/algorithm/string.hpp>
+#include <fstream>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-std::vector<std::string> whitespace_tokenize(std::string text);
+namespace bert_tokenizer
+{
+const std::wstring stripChar = L" \t\n\r\v\f";
+using Vocab = std::unordered_map<std::wstring, size_t>;
+using InvVocab = std::unordered_map<size_t, std::wstring>;
 
-std::map<std::string, int> read_vocab(const char * filename);
+static std::string normalize_nfd(const std::string & s)
+{
+  std::string ret;
+  char * result = (char *)utf8proc_NFD((unsigned char *)s.c_str());
+  if (result) {
+    ret = std::string(result);
+    free(result);
+    result = NULL;
+  }
+  return ret;
+}
+
+static bool isStripChar(const wchar_t & ch) { return stripChar.find(ch) != std::wstring::npos; }
+
+static std::wstring strip(const std::wstring & text)
+{
+  std::wstring ret = text;
+  if (ret.empty()) return ret;
+  size_t pos = 0;
+  while (pos < ret.size() && isStripChar(ret[pos])) pos++;
+  if (pos != 0) ret = ret.substr(pos, ret.size() - pos);
+  pos = ret.size() - 1;
+  while (pos != (size_t)-1 && isStripChar(ret[pos])) pos--;
+  return ret.substr(0, pos + 1);
+}
+
+static std::vector<std::wstring> split(const std::wstring & text)
+{
+  std::vector<std::wstring> result;
+  boost::split(result, text, boost::is_any_of(stripChar));
+  return result;
+}
+
+static std::vector<std::wstring> whitespaceTokenize(const std::wstring & text)
+{
+  std::wstring rtext = strip(text);
+  if (rtext.empty()) return std::vector<std::wstring>();
+  return split(text);
+}
+
+static std::wstring convertToUnicode(const std::string & text)
+{
+  size_t i = 0;
+  std::wstring ret;
+  while (i < text.size()) {
+    wchar_t codepoint;
+    utf8proc_ssize_t forward = utf8proc_iterate(
+      (utf8proc_uint8_t *)&text[i], text.size() - i, (utf8proc_int32_t *)&codepoint);
+    if (forward < 0) return L"";
+    ret += codepoint;
+    i += forward;
+  }
+  return ret;
+}
+
+static std::string convertFromUnicode(const std::wstring & wText)
+{
+  char dst[64];
+  std::string ret;
+  for (auto ch : wText) {
+    utf8proc_ssize_t num = utf8proc_encode_char(ch, (utf8proc_uint8_t *)dst);
+    if (num <= 0) return "";
+    ret += std::string(dst, dst + num);
+  }
+  return ret;
+}
+
+static std::wstring tolower(const std::wstring & s)
+{
+  std::wstring ret(s.size(), L' ');
+  for (size_t i = 0; i < s.size(); i++) {
+    ret[i] = utf8proc_tolower(s[i]);
+  }
+  return ret;
+}
+
+static std::shared_ptr<Vocab> loadVocab(const std::string & vocabFile)
+{
+  std::shared_ptr<Vocab> vocab(new Vocab);
+  size_t index = 0;
+  std::ifstream ifs(vocabFile, std::ifstream::in);
+  std::string line;
+  while (getline(ifs, line)) {
+    std::wstring token = convertToUnicode(line);
+    if (token.empty()) break;
+    token = strip(token);
+    (*vocab)[token] = index;
+    index++;
+  }
+  return vocab;
+}
+
+enum class PretrainedVocab { BERT_BASE_UNCASED };
+
+std::string get_vocab_path(const PretrainedVocab & vocab_type);
 
 class BasicTokenizer
 {
 public:
-  bool do_lower_case_;
-  std::vector<std::string> never_split_;
+  BasicTokenizer(bool doLowerCase);
+  std::vector<std::wstring> tokenize(const std::string & text) const;
 
-  BasicTokenizer(
-    bool do_lower_case = false,
-    std::vector<std::string> never_split = {"[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"})
-  {
-    do_lower_case_ = do_lower_case;
-    never_split_ = never_split;
-  }
+private:
+  std::wstring cleanText(const std::wstring & text) const;
+  bool isControol(const wchar_t & ch) const;
+  bool isWhitespace(const wchar_t & ch) const;
+  bool isPunctuation(const wchar_t & ch) const;
+  bool isChineseChar(const wchar_t & ch) const;
+  std::wstring tokenizeChineseChars(const std::wstring & text) const;
+  bool isStripChar(const wchar_t & ch) const;
+  std::wstring strip(const std::wstring & text) const;
+  std::vector<std::wstring> split(const std::wstring & text) const;
+  std::wstring runStripAccents(const std::wstring & text) const;
+  std::vector<std::wstring> runSplitOnPunc(const std::wstring & text) const;
 
-  std::string _clean_text(const std::string & text) const;
-
-  std::vector<std::string> _run_split_on_punc(const std::string & text) const;
-
-  std::string _run_strip_accents(const std::string & text) const;
-
-  std::string _tokenize_chinese_chars(std::string text) const;
-
-  std::string utf8chr(int cp) const;
-
-  bool _is_chinese_char(int cp) const;
-
-  std::vector<std::string> tokenize(const std::string & text) const;
-
-  void truncate_sequences(
-    std::vector<std::string> & textA, std::vector<std::string> & textB,
-    const char * truncation_strategy, size_t max_seq_length) const;
+  bool mDoLowerCase;
 };
 
 class WordpieceTokenizer
 {
 public:
-  std::map<std::string, int> vocab_;
-  std::string unk_token_;
-  int max_input_chars_per_word_;
-
-  WordpieceTokenizer(){};
-
   WordpieceTokenizer(
-    std::map<std::string, int> vocab, std::string unk_token = "[UNK]",
-    int max_input_chars_per_word = 100)
-  {
-    vocab_ = vocab;
-    unk_token_ = unk_token;
-    max_input_chars_per_word_ = max_input_chars_per_word;
-  }
-
-  void add_vocab(const std::map<std::string, int> & vocab);
-
-  std::vector<std::string> tokenize(const std::string & text) const;
-};
-
-class BertTokenizer
-{
-public:
-  enum class PretrainedVocabFile { BERT_BASE_UNCASED };
-  std::map<std::string, int> vocab;
-  std::map<int, std::string> ids_to_tokens;
-  bool do_lower_case_;
-  bool do_basic_tokenize_;
-  size_t maxlen_;
-  BasicTokenizer basic_tokenizer;
-  WordpieceTokenizer wordpiece_tokenizer;
-
-  explicit BertTokenizer(const PretrainedVocabFile & vocab)
-  {
-    const auto vocab_file = [](const auto & vocab) {
-      switch (vocab) {
-        case PretrainedVocabFile::BERT_BASE_UNCASED:
-          return "bert-base-uncased-vocab.txt";
-      }
-      throw std::runtime_error("Error, please specify valid vocab file.");
-    }(vocab);
-    add_vocab(
-      std::string(
-        ament_index_cpp::get_package_share_directory("bert_tokenizer") + "/vocab/" + vocab_file)
-        .c_str());
-  }
-
-  explicit BertTokenizer(
-    const char * vocab_file, bool do_lower_case = false, int max_len = 512,
-    bool do_basic_tokenize = true,
-    const std::vector<std::string> & /*never_split*/ = {
-      "[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"})
-  {
-    vocab = read_vocab(vocab_file);
-    for (std::map<std::string, int>::iterator i = vocab.begin(); i != vocab.end(); ++i)
-      ids_to_tokens[i->second] = i->first;
-    do_basic_tokenize_ = do_basic_tokenize;
-    do_lower_case_ = do_lower_case;
-    wordpiece_tokenizer.add_vocab(vocab);
-    maxlen_ = max_len;
-  }
-
-  void encode(
-    const std::string & textA, const std::string & textB, std::vector<float> & input_ids,
-    std::vector<float> & input_mask, std::vector<float> & segment_ids, size_t max_seq_length = 512,
-    const char * truncation_strategy = "longest_first") const;
+    std::shared_ptr<Vocab> vocab, const std::wstring & unkToken = L"[UNK]",
+    size_t maxInputCharsPerWord = 200);
+  std::vector<std::wstring> tokenize(const std::wstring & text) const;
 
 private:
-  void add_vocab(const char * vocab_file);
-  std::vector<std::string> tokenize(const std::string & text) const;
-  std::vector<float> convert_tokens_to_ids(const std::vector<std::string> & tokens) const;
+  std::shared_ptr<Vocab> mVocab;
+  std::wstring mUnkToken;
+  size_t mMaxInputCharsPerWord;
 };
+
+class FullTokenizer
+{
+public:
+  FullTokenizer(const std::string & vocabFile, bool doLowerCase = true);
+  std::vector<std::wstring> tokenize(const std::string & text) const;
+  std::vector<size_t> convertTokensToIds(const std::vector<std::wstring> & text) const;
+
+private:
+  std::shared_ptr<Vocab> mVocab;
+  InvVocab mInvVocab;
+  std::string mVocabFile;
+  bool mDoLowerCase;
+  BasicTokenizer mBasicTokenizer;
+  WordpieceTokenizer mWordpieceTokenizer;
+};
+}  // namespace bert_tokenizer

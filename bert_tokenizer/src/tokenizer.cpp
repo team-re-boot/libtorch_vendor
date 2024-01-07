@@ -12,504 +12,228 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
+/// This code comes from https://gist.github.com/luistung/ace4888cf5fd1bad07844021cb2c7ecf
+
 #include <bert_tokenizer/tokenizer.hpp>
-#include <boost/regex/pending/unicode_iterator.hpp>
-#include <boost/spirit/include/qi.hpp>
-#include <codecvt>
-#include <cstdint>
-#include <fstream>
-#include <iostream>
-#include <map>
-#include <regex>
-#include <string>
-#include <unilib/unicode.hpp>
-#include <unilib/uninorms.hpp>
-#include <vector>
 
-using namespace ufal::unilib;
-using namespace boost;
-using namespace spirit::qi;
-
-std::map<std::string, unicode::category_t> categories = {
-  {"Lu", unicode::Lu}, {"Ll", unicode::Ll}, {"Lt", unicode::Lt}, {"Lm", unicode::Lm},
-  {"Lo", unicode::Lo}, {"Mn", unicode::Mn}, {"Mc", unicode::Mc}, {"Me", unicode::Me},
-  {"Nd", unicode::Nd}, {"Nl", unicode::Nl}, {"No", unicode::No}, {"Pc", unicode::Pc},
-  {"Pd", unicode::Pd}, {"Ps", unicode::Ps}, {"Pe", unicode::Pe}, {"Pi", unicode::Pi},
-  {"Pf", unicode::Pf}, {"Po", unicode::Po}, {"Sm", unicode::Sm}, {"Sc", unicode::Sc},
-  {"Sk", unicode::Sk}, {"So", unicode::So}, {"Zs", unicode::Zs}, {"Zl", unicode::Zl},
-  {"Zp", unicode::Zp}, {"Cc", unicode::Cc}, {"Cf", unicode::Cf}, {"Cs", unicode::Cs},
-  {"Co", unicode::Co}, {"Cn", unicode::Cn},
-};
-
-std::map<unicode::category_t, std::string> categories_rev;
-
-std::string ltrim(std::string str)
+namespace bert_tokenizer
 {
-  return regex_replace(str, std::regex("^\\s+"), std::string(""));
+std::string get_vocab_path(const PretrainedVocab & vocab_type)
+{
+  const auto vocab_file = [](const auto & vocab_type) {
+    switch (vocab_type) {
+      case PretrainedVocab::BERT_BASE_UNCASED:
+        return "bert-base-uncased-vocab.txt";
+    }
+    throw std::runtime_error("Error, please specify valid vocab file.");
+  }(vocab_type);
+  return ament_index_cpp::get_package_share_directory("bert_tokenizer") + "/vocab/" + vocab_file;
 }
 
-std::string rtrim(std::string str)
+BasicTokenizer::BasicTokenizer(bool doLowerCase = true) : mDoLowerCase(doLowerCase) {}
+
+std::wstring BasicTokenizer::cleanText(const std::wstring & text) const
 {
-  return regex_replace(str, std::regex("\\s+$"), std::string(""));
-}
-
-std::string trim(std::string str) { return ltrim(rtrim(str)); }
-
-std::vector<std::string> split(const std::string & str, char delimiter)
-{
-  std::vector<std::string> internal;
-  std::stringstream ss(str);  // Turn the std::string into a stream.
-  std::string tok;
-
-  while (getline(ss, tok, delimiter)) {
-    internal.push_back(tok);
-  }
-  return internal;
-}
-
-std::map<std::string, int> read_vocab(const char * filename)
-{
-  std::map<std::string, int> vocab;
-  int index = 0;
-  unsigned int line_count = 1;
-  std::ifstream fs8(filename);
-  if (!fs8.is_open()) {
-    std::cout << "Could not open " << filename << std::endl;
-    return vocab;
-  }
-  std::string line;
-  // Read all the lines in the file
-  while (getline(fs8, line)) {
-    // check for invalid utf-8 (for a simple yes/no check, there is also utf8::is_valid function)
-    // std::string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
-    vocab.insert(std::pair<std::string, int>(std::string(line.begin(), line.end()), index));
-    index++;
-    line_count++;
-  }
-  return vocab;
-}
-
-std::vector<std::string> whitespace_tokenize(std::string text)
-{
-  std::vector<std::string> result;
-  char delimeter = ' ';
-  text = trim(text);
-  if (text == "") {
-    return result;
-  }
-  result = split(text, delimeter);
-  return result;
-}
-
-bool _is_whitespace(char letter)
-{
-  if (letter == ' ' or letter == '\t' or letter == '\n' or letter == '\r') return true;
-  long int cat = unicode::category(int(letter));
-  if (cat == categories["Zs"]) return true;
-  return false;
-}
-
-bool _is_control(char letter)
-{
-  if (letter == '\t' or letter == '\n' or letter == '\r') return false;
-  unicode::category_t cat = unicode::category(int(letter));
-  std::string cat_ = categories_rev[cat];
-  if (cat_[0] == 'C') return true;
-  return false;
-}
-
-bool _is_punctuation(char letter)
-{
-  int cp = int(letter);
-  if (
-    (cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64) or (cp >= 91 and cp <= 96) or
-    (cp >= 123 and cp <= 126))
-    return true;
-  unicode::category_t cat = unicode::category(int(letter));
-  std::string cat_ = categories_rev[cat];
-  if (cat_[0] == 'P') return true;
-  return false;
-}
-
-std::string BasicTokenizer::_clean_text(const std::string & text) const
-{
-  std::string output;
-  int len = 0;
-  char * char_array = new char[text.length() + 1];
-  strcpy(char_array, text.c_str());
-  while (char_array[len] != '\0') {
-    int cp = int(char_array[len]);
-    if (cp == 0 or cp == 0xfffd or _is_control(char_array[len])) continue;
-    if (_is_whitespace(char_array[len]))
-      output = output + " ";
+  std::wstring output;
+  for (const wchar_t & cp : text) {
+    if (cp == 0 || cp == 0xfffd || isControol(cp)) continue;
+    if (isWhitespace(cp))
+      output += L" ";
     else
-      output = output + char_array[len];
-    ++len;
+      output += cp;
   }
   return output;
 }
 
-std::vector<std::string> BasicTokenizer::_run_split_on_punc(const std::string & text) const
+bool BasicTokenizer::isControol(const wchar_t & ch) const
 {
-  // vector<std::string> never_split = {"[UNK]", "[SEP]", "[PAD]", "[CLS]", "[MASK]"};
-  if (find(never_split_.begin(), never_split_.end(), text) != never_split_.end()) {
-    std::vector<std::string> temp = {text};
-    return temp;
-  }
-  int len_char_array = text.length();
-  char * char_array = new char[text.length() + 1];
-  strcpy(char_array, text.c_str());
-  int i = 0;
-  bool start_new_word = true;
-  std::vector<std::vector<char>> output;
-  while (i < len_char_array) {
-    char letter = char_array[i];
-    if (_is_punctuation(letter)) {
-      std::vector<char> temp = {letter};
-      output.push_back(temp);
-      start_new_word = true;
-    } else {
-      if (start_new_word) {
-        std::vector<char> temp_2;
-        output.push_back(temp_2);
-      }
-      start_new_word = false;
-      output.back().push_back(letter);
-    }
-    i += 1;
-  }
-  std::vector<std::string> final_output;
-  std::vector<std::vector<char>>::iterator ptr;
-  for (ptr = output.begin(); ptr < output.end(); ptr++) {
-    std::vector<char> out = *ptr;
-    std::string word = "";
-    std::vector<char>::iterator itr;
-    for (itr = out.begin(); itr < out.end(); itr++) {
-      word = word + *itr;
-    }
-    final_output.push_back(word);
-  }
-  return final_output;
+  if (ch == L'\t' || ch == L'\n' || ch == L'\r') return false;
+  auto cat = utf8proc_category(ch);
+  if (cat == UTF8PROC_CATEGORY_CC || cat == UTF8PROC_CATEGORY_CF) return true;
+  return false;
 }
 
-std::string BasicTokenizer::_run_strip_accents(const std::string & text) const
+bool BasicTokenizer::isWhitespace(const wchar_t & ch) const
 {
-  std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
-  auto temp = conv.from_bytes(text);
-  auto nfd = [](std::u32string str) {
-    uninorms::nfd(str);
-    return str;
-  };
-  auto text_ = nfd(temp);
-  std::string output;
-  int i = 0;
-  int len_char_array = text_.length() + 1;
-  char * char_array = new char[text_.length() + 1];
-  int j;
-  for (j = 0; j < len_char_array; j++) {
-    char_array[j] = text_[j];
+  if (ch == L' ' || ch == L'\t' || ch == L'\n' || ch == L'\r') return true;
+  auto cat = utf8proc_category(ch);
+  if (cat == UTF8PROC_CATEGORY_ZS) return true;
+  return false;
+}
+
+bool BasicTokenizer::isPunctuation(const wchar_t & ch) const
+{
+  if (
+    (ch >= 33 && ch <= 47) || (ch >= 58 && ch <= 64) || (ch >= 91 && ch <= 96) ||
+    (ch >= 123 && ch <= 126))
+    return true;
+  auto cat = utf8proc_category(ch);
+  if (
+    cat == UTF8PROC_CATEGORY_PD || cat == UTF8PROC_CATEGORY_PS || cat == UTF8PROC_CATEGORY_PE ||
+    cat == UTF8PROC_CATEGORY_PC || cat == UTF8PROC_CATEGORY_PO  //sometimes ¶ belong SO
+    || cat == UTF8PROC_CATEGORY_PI || cat == UTF8PROC_CATEGORY_PF)
+    return true;
+  return false;
+}
+
+bool BasicTokenizer::isChineseChar(const wchar_t & ch) const
+{
+  if (
+    (ch >= 0x4E00 && ch <= 0x9FFF) || (ch >= 0x3400 && ch <= 0x4DBF) ||
+    (ch >= 0x20000 && ch <= 0x2A6DF) || (ch >= 0x2A700 && ch <= 0x2B73F) ||
+    (ch >= 0x2B740 && ch <= 0x2B81F) || (ch >= 0x2B820 && ch <= 0x2CEAF) ||
+    (ch >= 0xF900 && ch <= 0xFAFF) || (ch >= 0x2F800 && ch <= 0x2FA1F))
+    return true;
+  return false;
+}
+
+std::wstring BasicTokenizer::tokenizeChineseChars(const std::wstring & text) const
+{
+  std::wstring output;
+  for (auto & ch : text) {
+    if (isChineseChar(ch)) {
+      output += L' ';
+      output += ch;
+      output += L' ';
+    } else
+      output += ch;
   }
-  while (i < len_char_array) {
-    long int cat = unicode::category(int(char_array[i]));
-    if (cat == categories["Mn"]) {
-      i++;
-      continue;
+  return output;
+}
+
+std::wstring BasicTokenizer::runStripAccents(const std::wstring & text) const
+{
+  //Strips accents from a piece of text.
+  std::wstring nText;
+  try {
+    nText = convertToUnicode(normalize_nfd(convertFromUnicode(text)));
+  } catch (std::bad_cast & e) {
+    std::cerr << "bad_cast" << std::endl;
+    return L"";
+  }
+
+  std::wstring output;
+  for (auto & ch : nText) {
+    auto cat = utf8proc_category(ch);
+    if (cat == UTF8PROC_CATEGORY_MN) continue;
+    output += ch;
+  }
+  return output;
+}
+
+std::vector<std::wstring> BasicTokenizer::runSplitOnPunc(const std::wstring & text) const
+{
+  size_t i = 0;
+  bool startNewWord = true;
+  std::vector<std::wstring> output;
+  while (i < text.size()) {
+    wchar_t ch = text[i];
+    if (isPunctuation(ch)) {
+      output.push_back(std::wstring(&ch, 1));
+      startNewWord = true;
+    } else {
+      if (startNewWord) output.push_back(std::wstring());
+      startNewWord = false;
+      output[output.size() - 1] += ch;
     }
-    // if (_is_punctuation(char_array[i]))
-    // {
-    //     i++;
-    //     continue;
-    // }
-    output = output + char_array[i];
     i++;
   }
   return output;
 }
 
-std::string BasicTokenizer::utf8chr(int cp) const
+std::vector<std::wstring> BasicTokenizer::tokenize(const std::string & text) const
 {
-  char c[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
-  if (cp <= 0x7F) {
-    c[0] = cp;
-  } else if (cp <= 0x7FF) {
-    c[0] = (cp >> 6) + 192;
-    c[1] = (cp & 63) + 128;
-  } else if (0xd800 <= cp && cp <= 0xdfff) {
-  }  //invalid block of utf8
-  else if (cp <= 0xFFFF) {
-    c[0] = (cp >> 12) + 224;
-    c[1] = ((cp >> 6) & 63) + 128;
-    c[2] = (cp & 63) + 128;
-  } else if (cp <= 0x10FFFF) {
-    c[0] = (cp >> 18) + 240;
-    c[1] = ((cp >> 12) & 63) + 128;
-    c[2] = ((cp >> 6) & 63) + 128;
-    c[3] = (cp & 63) + 128;
+  std::wstring nText = convertToUnicode(text);
+  nText = cleanText(nText);
+
+  nText = tokenizeChineseChars(nText);
+
+  const std::vector<std::wstring> & origTokens = whitespaceTokenize(nText);
+  std::vector<std::wstring> splitTokens;
+  for (std::wstring token : origTokens) {
+    if (mDoLowerCase) {
+      token = tolower(token);
+      token = runStripAccents(token);
+    }
+    const auto & tokens = runSplitOnPunc(token);
+    splitTokens.insert(splitTokens.end(), tokens.begin(), tokens.end());
   }
-  return std::string(c);
+  return whitespaceTokenize(boost::join(splitTokens, L" "));
 }
 
-std::string BasicTokenizer::_tokenize_chinese_chars(std::string text) const
+WordpieceTokenizer::WordpieceTokenizer(
+  const std::shared_ptr<Vocab> vocab, const std::wstring & unkToken, size_t maxInputCharsPerWord)
+: mVocab(vocab), mUnkToken(unkToken), mMaxInputCharsPerWord(maxInputCharsPerWord)
 {
-  auto && utf8_text = text;
-  u8_to_u32_iterator<std::string::iterator> tbegin(utf8_text.begin()), tend(utf8_text.end());
-  std::vector<uint32_t> result;
-  parse(tbegin, tend, *standard_wide::char_, result);
-  std::string output;
-  for (auto && code_point : result) {
-    int cp = code_point;
-    if (_is_chinese_char(cp)) {
-      output += " ";
-      output.append(utf8chr(code_point));
-      output += " ";
-    } else {
-      output.append(utf8chr(code_point));
-    }
-    //        ++len;
-  }
-
-  return output;
 }
 
-bool BasicTokenizer::_is_chinese_char(int cp) const
+std::vector<std::wstring> WordpieceTokenizer::tokenize(const std::wstring & text) const
 {
-  if (
-    (cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0x3400 && cp <= 0x4DBF) ||
-    (cp >= 0x20000 && cp <= 0x2A6DF) || (cp >= 0x2A700 && cp <= 0x2B73F) ||
-    (cp >= 0x2B740 && cp <= 0x2B81F) || (cp >= 0x2B820 && cp <= 0x2CEAF) ||
-    (cp >= 0xF900 && cp <= 0xFAFF) || (cp >= 0x2F800 && cp <= 0x2FA1F) || cp == 0x3002 ||
-    cp == 0xFF1F || cp == 0xFF01 || cp == 0xFF0C || cp == 0x3001 || cp == 0xFF1B || cp == 0xFF1A ||
-    cp == 0x300C || cp == 0x300D || cp == 0x300E || cp == 0x300F || cp == 0x2018 || cp == 0x2019 ||
-    cp == 0x201C || cp == 0x201D || cp == 0xFF08 || cp == 0xFF09 || cp == 0x3014 || cp == 0x3015 ||
-    cp == 0x3010 || cp == 0x3011 || cp == 0x2014 || cp == 0x2026 || cp == 0x2013 || cp == 0xFF0E ||
-    cp == 0x300A || cp == 0x300B || cp == 0x3008 || cp == 0x3009)
-    return true;
-  else
-    return false;
-}
-
-std::vector<std::string> BasicTokenizer::tokenize(const std::string & text) const
-{
-  //    text = _clean_text(text);
-  std::vector<std::string> orig_tokens = whitespace_tokenize(_tokenize_chinese_chars(text));
-  std::vector<std::string> split_tokens;
-  std::vector<std::string>::iterator itr;
-  for (itr = orig_tokens.begin(); itr < orig_tokens.end(); itr++) {
-    std::string temp = *itr;
-    if (
-      do_lower_case_ and
-      not bool(find(never_split_.begin(), never_split_.end(), *itr) != never_split_.end())) {
-      transform(
-        temp.begin(), temp.end(), temp.begin(), [](unsigned char c) { return std::tolower(c); });
-      temp = _run_strip_accents(temp);
+  std::vector<std::wstring> outputTokens;
+  for (auto & token : whitespaceTokenize(text)) {
+    if (token.size() > mMaxInputCharsPerWord) {
+      outputTokens.push_back(mUnkToken);
     }
-    std::vector<std::string> split = _run_split_on_punc(temp);
-    split_tokens.insert(split_tokens.end(), split.begin(), split.end());
-  }
-  std::string temp_text;
-  std::vector<std::string>::iterator ptr;
-  for (ptr = split_tokens.begin(); ptr < split_tokens.end(); ptr++) {
-    temp_text = temp_text + " " + *ptr;
-  }
-  return whitespace_tokenize(temp_text);
-}
-
-void BasicTokenizer::truncate_sequences(
-  std::vector<std::string> & tokens_A, std::vector<std::string> & tokens_B,
-  const char * truncation_strategy = "longest_first", size_t max_seq_length = 509) const
-{
-  size_t length = tokens_A.size() + tokens_B.size();
-  if (strcmp(truncation_strategy, "longest_first") == 0) {
-    while (length > max_seq_length) {
-      if (tokens_A.empty() || tokens_A.size() > tokens_B.size()) {
-        tokens_A.pop_back();
-      } else {
-        tokens_B.pop_back();
-      }
-      --length;
-    }
-  } else if (strcmp(truncation_strategy, "only_first") == 0) {
-    while (length > max_seq_length && !tokens_A.empty()) {
-      tokens_A.pop_back();
-      --length;
-    }
-  } else if (strcmp(truncation_strategy, "only_second") == 0) {
-    while (length > max_seq_length && !tokens_B.empty()) {
-      tokens_B.pop_back();
-      --length;
-    }
-  } else if (strcmp(truncation_strategy, "do_not_truncate") == 0) {
-    assert((length < max_seq_length));
-  } else {
-    std::cerr << "invalid truncation strategy.  skipping trancation" << std::endl;
-  }
-}
-
-void WordpieceTokenizer::add_vocab(const std::map<std::string, int> & vocab)
-{
-  vocab_ = vocab;
-  unk_token_ = "[UNK]";
-  max_input_chars_per_word_ = 100;
-}
-
-std::vector<std::string> WordpieceTokenizer::tokenize(const std::string & text) const
-{
-  std::vector<std::string> output_tokens;
-  std::vector<std::string> whitespace_tokens = whitespace_tokenize(text);
-  std::vector<std::string>::iterator ptr;
-  for (ptr = whitespace_tokens.begin(); ptr < whitespace_tokens.end(); ptr++) {
-    // cout<<*ptr<<"\n";
-    std::string token = *ptr;
-    int len_char_array = token.length();
-    //        cout << len_char_array <<endl;
-    char * char_array = new char[token.length() + 1];
-    strcpy(char_array, token.c_str());
-    if (len_char_array > max_input_chars_per_word_) {
-      output_tokens.push_back(unk_token_);
-      continue;
-    }
-    // cout<<len_char_array<<'\n';
-    bool is_bad = false;
-    int start = 0;
-    std::vector<std::string> sub_tokens;
-    while (start < len_char_array) {
-      int end = len_char_array;
-      std::string cur_substr = "";
+    bool isBad = false;
+    size_t start = 0;
+    std::vector<std::wstring> subTokens;
+    while (start < token.size()) {
+      size_t end = token.size();
+      std::wstring curSubstr;
+      bool hasCurSubstr = false;
       while (start < end) {
-        std::string substr;
-        for (int c = start; c < end; c++) substr = substr + char_array[c];
-        if (start > 0) substr = "##" + substr;
-        if (vocab_.count(substr) == 1) {
-          cur_substr = substr;
+        std::wstring substr = token.substr(start, end - start);
+        if (start > 0) substr = L"##" + substr;
+        if (mVocab->find(substr) != mVocab->end()) {
+          curSubstr = substr;
+          hasCurSubstr = true;
           break;
         }
-        end = end - 1;
+        end--;
       }
-      if (cur_substr == "") {
-        is_bad = true;
+      if (!hasCurSubstr) {
+        isBad = true;
         break;
       }
-      sub_tokens.push_back(cur_substr);
+      subTokens.push_back(curSubstr);
       start = end;
     }
-    if (is_bad)
-      output_tokens.push_back(unk_token_);
-    else {
-      output_tokens.insert(output_tokens.end(), sub_tokens.begin(), sub_tokens.end());
-    }
+    if (isBad)
+      outputTokens.push_back(mUnkToken);
+    else
+      outputTokens.insert(outputTokens.end(), subTokens.begin(), subTokens.end());
   }
-  return output_tokens;
+  return outputTokens;
 }
 
-void BertTokenizer::add_vocab(const char * vocab_file)
+FullTokenizer::FullTokenizer(const std::string & vocabFile, bool doLowerCase)
+: mVocab(loadVocab(vocabFile)),
+  mBasicTokenizer(BasicTokenizer(doLowerCase)),
+  mWordpieceTokenizer(WordpieceTokenizer(mVocab))
 {
-  vocab = read_vocab(vocab_file);
-  for (std::map<std::string, int>::iterator i = vocab.begin(); i != vocab.end(); ++i)
-    ids_to_tokens[i->second] = i->first;
-  do_basic_tokenize_ = true;
-  do_lower_case_ = false;
-  wordpiece_tokenizer.add_vocab(vocab);
-  maxlen_ = 512;
+  for (auto & v : *mVocab) mInvVocab[v.second] = v.first;
 }
 
-std::vector<std::string> BertTokenizer::tokenize(const std::string & text) const
+std::vector<std::wstring> FullTokenizer::tokenize(const std::string & text) const
 {
-  std::vector<std::string> split_tokens;
-  if (do_basic_tokenize_) {
-    std::vector<std::string> temp_tokens = basic_tokenizer.tokenize(text);
-    std::vector<std::string>::iterator ptr;
-    for (ptr = temp_tokens.begin(); ptr < temp_tokens.end(); ptr++) {
-      std::vector<std::string> subtokens = wordpiece_tokenizer.tokenize(*ptr);
-      split_tokens.insert(split_tokens.end(), subtokens.begin(), subtokens.end());
-    }
-  } else {
-    split_tokens = wordpiece_tokenizer.tokenize(text);
-  }
-  return split_tokens;
+  std::vector<std::wstring> splitTokens;
+  for (auto & token : mBasicTokenizer.tokenize(text))
+    for (auto & subToken : mWordpieceTokenizer.tokenize(token)) splitTokens.push_back(subToken);
+  return splitTokens;
 }
 
-std::vector<float> BertTokenizer::convert_tokens_to_ids(
-  const std::vector<std::string> & tokens) const
+std::vector<size_t> FullTokenizer::convertTokensToIds(const std::vector<std::wstring> & text) const
 {
-  std::vector<float> ids;
-  // vector<std::string>::iterator ptr;
-  // for (ptr = tokens.begin(); ptr < tokens.end(); ptr++) {
-  //   ids.push_back(float(vocab[*ptr]));
-  // }
-  for (const auto & token : tokens) {
-    ids.push_back(float(vocab.at(token)));
+  std::vector<size_t> ret(text.size());
+  for (size_t i = 0; i < text.size(); i++) {
+    ret[i] = (*mVocab)[text[i]];
   }
-  if (ids.size() > maxlen_)
-    std::cout << "Token indices sequence length is longer than the specified maximum";
-  return ids;
+  return ret;
 }
 
-void BertTokenizer::encode(
-  const std::string & textA, const std::string & textB, std::vector<float> & input_ids,
-  std::vector<float> & input_mask, std::vector<float> & segment_ids, size_t max_seq_length,
-  const char * truncation_strategy) const
-{
-  BasicTokenizer basictokenizer;
-  std::vector<std::string> tokens_A;
-  std::vector<std::string> words = basictokenizer.tokenize(textA);
-  std::vector<std::string> token;
-  std::vector<std::string>::iterator itr;
-  for (itr = words.begin(); itr < words.end(); itr++) {
-    token = this->tokenize(*itr);
-    tokens_A.insert(tokens_A.end(), token.begin(), token.end());
-  }
-  if (textB == "") {
-    if (tokens_A.size() > max_seq_length - 2) {
-      tokens_A.assign(tokens_A.begin(), tokens_A.begin() + max_seq_length - 2);
-    }
-    // insert "[CLS}"
-    tokens_A.insert(tokens_A.begin(), "[CLS]");
-    // insert "[SEP]"
-    tokens_A.push_back("[SEP]");
-    for (size_t i = 0; i < tokens_A.size(); i++) {
-      segment_ids.push_back(0.0);
-      input_mask.push_back(1.0);
-    }
-    input_ids = this->convert_tokens_to_ids(tokens_A);
-    while (input_ids.size() < max_seq_length) {
-      input_ids.push_back(0.0);
-      input_mask.push_back(0.0);
-      segment_ids.push_back(0.0);
-    }
-  } else {
-    std::vector<std::string> tokens_B;
-    words = basictokenizer.tokenize(textB);
-    for (itr = words.begin(); itr < words.end(); itr++) {
-      token = this->tokenize(*itr);
-      tokens_B.insert(tokens_B.end(), token.begin(), token.end());
-    }
-    basictokenizer.truncate_sequences(tokens_A, tokens_B, truncation_strategy, max_seq_length - 3);
-    // insert "[CLS}"
-    tokens_A.insert(tokens_A.begin(), "[CLS]");
-    // insert "[SEP]"
-    tokens_A.push_back("[SEP]");
-    for (size_t i = 0; i < tokens_A.size(); i++) {
-      segment_ids.push_back(0.0);
-      input_mask.push_back(1.0);
-    }
-    // insert "[SEP]"
-    tokens_B.push_back("[SEP]");
-    for (size_t i = 0; i < tokens_B.size(); i++) {
-      segment_ids.push_back(0.0);
-      input_mask.push_back(1.0);
-    }
-    tokens_A.insert(tokens_A.end(), tokens_B.begin(), tokens_B.end());
-    // Padding
-    input_ids = this->convert_tokens_to_ids(tokens_A);
-    while (input_ids.size() < max_seq_length) {
-      input_ids.push_back(0.0);
-      input_mask.push_back(0.0);
-      segment_ids.push_back(0.0);
-    }
-  }
-  for (auto && token : tokens_A) {
-    std::cout << token << " ";
-  }
-  std::cout << std::endl;
-}
+// std::string get_vocab_path()
+// {
+
+// }
+
+}  // namespace bert_tokenizer

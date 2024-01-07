@@ -11,12 +11,12 @@ ament_auto_find_build_dependencies()
 
 ament_auto_add_library(
   bert_tokenizer SHARED
-  src/tokenizer.cpp src/unilib/unicode.cpp src/unilib/uninorms.cpp)
+  src/tokenizer.cpp)
 
 file(DOWNLOAD https://cdn.huggingface.co/bert-base-uncased-vocab.txt vocab/bert-base-uncased-vocab.txt)
 install(
   DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/vocab
-  DESTINATION vocab
+  DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
