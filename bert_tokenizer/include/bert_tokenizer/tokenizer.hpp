@@ -30,7 +30,7 @@ const std::wstring stripChar = L" \t\n\r\v\f";
 using Vocab = std::unordered_map<std::wstring, size_t>;
 using InvVocab = std::unordered_map<size_t, std::wstring>;
 
-static std::string normalize_nfd(const std::string & s)
+std::string normalize_nfd(const std::string & s)
 {
   std::string ret;
   char * result = (char *)utf8proc_NFD((unsigned char *)s.c_str());
@@ -42,9 +42,9 @@ static std::string normalize_nfd(const std::string & s)
   return ret;
 }
 
-static bool isStripChar(const wchar_t & ch) { return stripChar.find(ch) != std::wstring::npos; }
+bool isStripChar(const wchar_t & ch) { return stripChar.find(ch) != std::wstring::npos; }
 
-static std::wstring strip(const std::wstring & text)
+std::wstring strip(const std::wstring & text)
 {
   std::wstring ret = text;
   if (ret.empty()) return ret;
@@ -56,21 +56,21 @@ static std::wstring strip(const std::wstring & text)
   return ret.substr(0, pos + 1);
 }
 
-static std::vector<std::wstring> split(const std::wstring & text)
+std::vector<std::wstring> split(const std::wstring & text)
 {
   std::vector<std::wstring> result;
   boost::split(result, text, boost::is_any_of(stripChar));
   return result;
 }
 
-static std::vector<std::wstring> whitespaceTokenize(const std::wstring & text)
+std::vector<std::wstring> whitespaceTokenize(const std::wstring & text)
 {
   std::wstring rtext = strip(text);
   if (rtext.empty()) return std::vector<std::wstring>();
   return split(text);
 }
 
-static std::wstring convertToUnicode(const std::string & text)
+std::wstring convertToUnicode(const std::string & text)
 {
   size_t i = 0;
   std::wstring ret;
@@ -85,7 +85,7 @@ static std::wstring convertToUnicode(const std::string & text)
   return ret;
 }
 
-static std::string convertFromUnicode(const std::wstring & wText)
+std::string convertFromUnicode(const std::wstring & wText)
 {
   char dst[64];
   std::string ret;
@@ -97,7 +97,7 @@ static std::string convertFromUnicode(const std::wstring & wText)
   return ret;
 }
 
-static std::wstring tolower(const std::wstring & s)
+std::wstring tolower(const std::wstring & s)
 {
   std::wstring ret(s.size(), L' ');
   for (size_t i = 0; i < s.size(); i++) {
@@ -106,7 +106,7 @@ static std::wstring tolower(const std::wstring & s)
   return ret;
 }
 
-static std::shared_ptr<Vocab> loadVocab(const std::string & vocabFile)
+std::shared_ptr<Vocab> loadVocab(const std::string & vocabFile)
 {
   std::shared_ptr<Vocab> vocab(new Vocab);
   size_t index = 0;

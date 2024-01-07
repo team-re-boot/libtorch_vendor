@@ -20,10 +20,12 @@ TEST(BERT, tokenize)
 {
   using namespace bert_tokenizer;
   const auto tokenizer = FullTokenizer(get_vocab_path(PretrainedVocab::BERT_BASE_UNCASED));
-  auto ids = tokenizer.convertTokensToIds(tokenizer.tokenize("Hello World"));
-  // EXPECT_EQ(ids.size(), static_cast<size_t>(4));
-  EXPECT_EQ(ids[0], 0);
-  EXPECT_EQ(ids[1], 1);
+  const auto ids = tokenizer.convertTokensToIds(tokenizer.tokenize("Hello World"));
+  EXPECT_EQ(ids[0], size_t(101));
+  EXPECT_EQ(ids[1], size_t(7592));
+  EXPECT_EQ(ids[2], size_t(2088));
+  EXPECT_EQ(ids[3], size_t(102));
+  EXPECT_EQ(ids.size(), size_t(4));
 }
 
 int main(int argc, char ** argv)

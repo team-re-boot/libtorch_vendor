@@ -224,10 +224,12 @@ std::vector<std::wstring> FullTokenizer::tokenize(const std::string & text) cons
 
 std::vector<size_t> FullTokenizer::convertTokensToIds(const std::vector<std::wstring> & text) const
 {
-  std::vector<size_t> ret(text.size());
+  std::vector<size_t> ret(text.size() + 2);  /// Adding [CLS] for first and [SEP] to last.
+  ret[0] = (*mVocab)[L"[CLS]"];
   for (size_t i = 0; i < text.size(); i++) {
-    ret[i] = (*mVocab)[text[i]];
+    ret[i + 1] = (*mVocab)[text[i]];
   }
+  ret[text.size() + 1] = (*mVocab)[L"[SEP]"];
   return ret;
 }
 
