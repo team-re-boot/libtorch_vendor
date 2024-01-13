@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TORCH_UTIL__TYPE_ADAPTATION_HPP_
-#define TORCH_UTIL__TYPE_ADAPTATION_HPP_
+#include <torch_util/type_adapter.hpp>
 
-#endif  // TORCH_UTIL__TYPE_ADAPTATION_HPP_
+namespace torch_util
+{
+}  // namespace torch_util

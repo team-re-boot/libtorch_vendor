@@ -8,6 +8,9 @@
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>ament_cmake_auto</build_depend>
+
   <depend version_eq="4.4.0">python3-typing-extensions</depend>
 
   <test_depend>ament_lint_auto</test_depend>

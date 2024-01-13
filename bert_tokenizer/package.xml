@@ -9,7 +9,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>libtorch_vendor</depend>
   <depend>utf8proc_vendor</depend>
   <depend>ament_index_cpp</depend>
 

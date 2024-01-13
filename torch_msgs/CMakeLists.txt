@@ -10,8 +10,13 @@ find_package(ament_cmake_auto REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  msg/DataType.msg
-  msg/Tensor.msg
+  msg/FP32Tensor.msg
+  msg/FP64Tensor.msg
+  msg/INT8Tensor.msg
+  msg/INT16Tensor.msg
+  msg/INT32Tensor.msg
+  msg/INT64Tensor.msg
+  msg/UINT8Tensor.msg
 )
 
 
