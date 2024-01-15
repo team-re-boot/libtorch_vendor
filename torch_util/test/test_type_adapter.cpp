@@ -16,6 +16,8 @@
 
 #include <torch_util/type_adapter.hpp>
 
+namespace torch_util
+{
 class TestNode : public rclcpp::Node
 {
   explicit TestNode(const rclcpp::NodeOptions & options) : Node("test", options) {}
@@ -25,11 +27,21 @@ TEST(Util, type_adapter) {}
 
 TEST(Util, to_torch_tensor)
 {
-  torch_util::to_torch_tensor(torch_msgs::build<torch_msgs::msg::FP32Tensor>()
-                                .is_cuda(false)
-                                .data({1.1, 2.2, 3.3, 4.4})
-                                .shape({2, 2}));
+  const auto tensor = to_torch_tensor(torch_msgs::build<torch_msgs::msg::FP32Tensor>()
+                                        .is_cuda(false)
+                                        .data({1.1, 2.2, 3.3, 4.4})
+                                        .shape({2, 2}));
+  const auto msg = to_fp32_tensor_msg(tensor);
+  EXPECT_EQ(msg.data.size(), static_cast<size_t>(4));
+  EXPECT_FLOAT_EQ(msg.data[0], 1.1);
+  EXPECT_FLOAT_EQ(msg.data[1], 2.2);
+  EXPECT_FLOAT_EQ(msg.data[2], 3.3);
+  EXPECT_FLOAT_EQ(msg.data[3], 4.4);
+  EXPECT_EQ(msg.shape.size(), static_cast<size_t>(2));
+  EXPECT_EQ(msg.shape[0], static_cast<int64_t>(2));
+  EXPECT_EQ(msg.shape[1], static_cast<int64_t>(2));
 }
+}  // namespace torch_util
 
 int main(int argc, char ** argv)
 {
