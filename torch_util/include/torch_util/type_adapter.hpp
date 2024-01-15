@@ -84,4 +84,28 @@ DEFINE_TO_TENSOR_MSG_FUNCTION(torch_msgs::msg::UINT8Tensor, uint8, uint8_t)
 #undef DEFINE_TO_TENSOR_MSG_FUNCTION
 }  // namespace torch_util
 
+#define DEFINE_TYPE_ADAPTER(MESSAGE_TYPE, CPP_DTYPE)                                               \
+  template <>                                                                                      \
+  struct rclcpp::TypeAdapter<torch::Tensor, MESSAGE_TYPE>                                          \
+  {                                                                                                \
+    using is_specialized = std::true_type;                                                         \
+    using custom_type = torch::Tensor;                                                             \
+    using ros_message_type = MESSAGE_TYPE;                                                         \
+    static void convert_to_ros_message(const custom_type & source, ros_message_type & destination) \
+    {                                                                                              \
+      destination = torch_util::to_##CPP_DTYPE##_tensor_msg(source);                               \
+    }                                                                                              \
+    static void convert_to_custom(const ros_message_type & source, custom_type & destination)      \
+    {                                                                                              \
+      destination = torch_util::to_torch_tensor(source);                                           \
+    }                                                                                              \
+  };
+DEFINE_TYPE_ADAPTER(torch_msgs::msg::FP32Tensor, fp32)
+DEFINE_TYPE_ADAPTER(torch_msgs::msg::FP64Tensor, fp64)
+DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT8Tensor, int8)
+DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT16Tensor, int16)
+DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT32Tensor, int32)
+DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT64Tensor, int64)
+DEFINE_TYPE_ADAPTER(torch_msgs::msg::UINT8Tensor, uint8)
+
 #endif  // TORCH_UTIL__TYPE_TYPEADAPTER_HPP_
