@@ -14,17 +14,12 @@
 
 #include <gtest/gtest.h>
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <functional>
 #include <torch_util/type_adapter.hpp>
 
 namespace torch_util
 {
-class TestNode : public rclcpp::Node
-{
-  explicit TestNode(const rclcpp::NodeOptions & options) : Node("test", options) {}
-};
-
-TEST(Util, type_adapter) {}
-
 TEST(Util, to_torch_tensor)
 {
   const auto tensor = to_torch_tensor(torch_msgs::build<torch_msgs::msg::FP32Tensor>()
@@ -41,12 +36,60 @@ TEST(Util, to_torch_tensor)
   EXPECT_EQ(msg.shape[0], static_cast<int64_t>(2));
   EXPECT_EQ(msg.shape[1], static_cast<int64_t>(2));
 }
+
+using AdaptedType = rclcpp::TypeAdapter<torch::Tensor, torch_msgs::msg::FP32Tensor>;
+
+class PubNode : public rclcpp::Node
+{
+public:
+  explicit PubNode(const rclcpp::NodeOptions & options) : Node("test", options)
+  {
+    publisher_ = create_publisher<AdaptedType>("tensor", 1);
+  }
+  void publish(const torch::Tensor & tensor) { publisher_->publish(tensor); }
+
+private:
+  std::shared_ptr<rclcpp::Publisher<AdaptedType>> publisher_;
+};
+
+class SubNode : public rclcpp::Node
+{
+public:
+  explicit SubNode(
+    const rclcpp::NodeOptions & options, const std::function<void(const torch::Tensor &)> function)
+  : Node("test", options)
+  {
+    subscriber_ = create_subscription<AdaptedType>("tensor", 1, function);
+  }
+
+private:
+  std::shared_ptr<rclcpp::Subscription<AdaptedType>> subscriber_;
+};
+
+TEST(Util, type_adapter)
+{
+  rclcpp::init(0, nullptr);
+  rclcpp::NodeOptions options;
+  options.use_intra_process_comms(true);
+  const auto pub_tensor = torch::zeros({1, 2});
+  bool tensor_recieved = false;
+  auto sub_node = std::make_shared<SubNode>(options, [&](const torch::Tensor & tensor) {
+    EXPECT_TRUE(pub_tensor.data_ptr() == tensor.data_ptr());
+    tensor_recieved = true;
+  });
+  auto pub_node = std::make_shared<PubNode>(options);
+  pub_node->publish(pub_tensor);
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(sub_node);
+  exec.add_node(pub_node);
+  exec.spin_some();
+  rclcpp::shutdown();
+  EXPECT_TRUE(tensor_recieved);
+}
 }  // namespace torch_util
 
 int main(int argc, char ** argv)
 {
-  rclcpp::init(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  rclcpp::shutdown();
   return RUN_ALL_TESTS();
 }
