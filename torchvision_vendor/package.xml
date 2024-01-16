@@ -13,6 +13,7 @@
   
   <depend>libtorch_vendor</depend>
   <depend>libpng-dev</depend>
+  <depend>libjpeg</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ouxt_lint_common</test_depend>
