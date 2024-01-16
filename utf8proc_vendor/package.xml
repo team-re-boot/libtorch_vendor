@@ -9,6 +9,7 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <build_depend>ament_cmake_auto</build_depend>
   <build_depend>ament_cmake_vendor_package</build_depend>
 
   <test_depend>ament_lint_auto</test_depend>
