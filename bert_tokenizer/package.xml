@@ -11,6 +11,7 @@
 
   <depend>utf8proc_vendor</depend>
   <depend>ament_index_cpp</depend>
+  <depend>boost</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ouxt_lint_common</test_depend>
