@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
+find_package(utf8proc_vendor REQUIRED)
 ament_auto_find_build_dependencies()
 
 ament_auto_add_library(

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(utf8proc_vendor)
+project(torch_msgs)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,15 +7,18 @@ endif()
 
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(rosidl_default_generators REQUIRED)
 
-ament_vendor(utf8proc_vendor
-  VCS_URL https://github.com/JuliaStrings/utf8proc.git
-  VCS_VERSION v2.9.0
+rosidl_generate_interfaces(${PROJECT_NAME}
+  msg/FP32Tensor.msg
+  msg/FP64Tensor.msg
+  msg/INT8Tensor.msg
+  msg/INT16Tensor.msg
+  msg/INT32Tensor.msg
+  msg/INT64Tensor.msg
+  msg/UINT8Tensor.msg
 )
 
-ament_export_include_directories(opt/utf8proc_vendor/include)
-ament_export_libraries(utf8proc)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -14,6 +14,9 @@
 
 /// This code comes from https://gist.github.com/luistung/ace4888cf5fd1bad07844021cb2c7ecf
 
+#ifndef BERT_TOKENIZER__TOKENIZER_HPP_
+#define BERT_TOKENIZER__TOKENIZER_HPP_
+
 #include <utf8proc.h>
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
@@ -178,3 +181,5 @@ private:
   WordpieceTokenizer mWordpieceTokenizer;
 };
 }  // namespace bert_tokenizer
+
+#endif  // BERT_TOKENIZER__TOKENIZER_HPP_

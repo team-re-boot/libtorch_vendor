@@ -5,10 +5,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 find_package(CUDA)
-
-include(ExternalProject)
 
 if(CUDA_FOUND)
   message("CUDA version: " ${CUDA_VERSION})
@@ -39,6 +38,7 @@ else()
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
 endif()
 
+include(ExternalProject)
 message("CMake arguments : " ${CMAKE_ARGS})
 externalproject_add(libtorch-ext
   GIT_REPOSITORY https://github.com/pytorch/pytorch.git
@@ -56,10 +56,38 @@ install(
 )
 
 ament_export_include_directories(include)
+ament_export_include_directories(include/torch/csrc/api/include)
+
+if(CUDA_FOUND)
+  ament_export_libraries(c10_cuda)
+  ament_export_libraries(tensorpipe_cuda)
+endif()
+
+ament_export_libraries(asmjit)
+ament_export_libraries(c10)
+ament_export_libraries(caffe2_nvrtc)
+ament_export_libraries(clog)
+ament_export_libraries(cpuinfo)
+ament_export_libraries(dnnl)
+ament_export_libraries(fbgemm)
+ament_export_libraries(fmt)
+ament_export_libraries(kineto)
+ament_export_libraries(nnpack)
+ament_export_libraries(threadpool)
+ament_export_libraries(pytorch_qnnpack)
+ament_export_libraries(qnnpack)
+ament_export_libraries(sleef)
+ament_export_libraries(tensorpipe)
+ament_export_libraries(tensorpipe_uv)
+ament_export_libraries(torch_cpu)
+ament_export_libraries(torch_cuda)
+ament_export_libraries(torch_global_deps)
+ament_export_libraries(torch)
+ament_export_libraries(XNNPACK)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+ament_auto_package()
