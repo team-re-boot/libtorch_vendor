@@ -15,9 +15,11 @@
 #ifndef TORCH_UTIL__TYPE_TYPEADAPTER_HPP_
 #define TORCH_UTIL__TYPE_TYPEADAPTER_HPP_
 
+#include <cv_bridge/cv_bridge.h>
 #include <torch/torch.h>
 
 #include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/image.hpp>
 #include <torch_msgs/msg/fp32_tensor.hpp>
 #include <torch_msgs/msg/fp64_tensor.hpp>
 #include <torch_msgs/msg/int16_tensor.hpp>
@@ -107,5 +109,7 @@ DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT16Tensor, int16)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT32Tensor, int32)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT64Tensor, int64)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::UINT8Tensor, uint8)
+
+torch::Tensor to_torch_tensor(const sensor_msgs::msg::Image & image);
 
 #endif  // TORCH_UTIL__TYPE_TYPEADAPTER_HPP_

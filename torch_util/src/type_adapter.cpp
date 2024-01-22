@@ -16,4 +16,13 @@
 
 namespace torch_util
 {
+torch::Tensor to_torch_tensor(const sensor_msgs::msg::Image & image)
+{
+  cv_bridge::CvImage bridge;
+  const cv::Mat image_cv = cv_bridge::toCvCopy(image, "rgb8")->image;
+  /// cv::Mat (H, W, C) => (C, W, H) => (C, H, W) torch::Tensor
+  return torch::from_blob(image_cv.data, {image_cv.rows, image_cv.cols, 3})
+    .transpose(0, 2)
+    .transpose(1, 2);
+}
 }  // namespace torch_util

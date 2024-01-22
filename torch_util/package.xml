@@ -13,6 +13,8 @@
   <depend>rclcpp</depend>
   <depend>libtorch_vendor</depend>
   <depend>torch_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>sensor_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ouxt_lint_common</test_depend>
