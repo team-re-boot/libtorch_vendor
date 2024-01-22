@@ -27,6 +27,7 @@
 #include <torch_msgs/msg/int64_tensor.hpp>
 #include <torch_msgs/msg/int8_tensor.hpp>
 #include <torch_msgs/msg/uint8_tensor.hpp>
+#include <tuple>
 
 namespace torch_util
 {
@@ -111,5 +112,26 @@ DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT64Tensor, int64)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::UINT8Tensor, uint8)
 
 torch::Tensor to_torch_tensor(const sensor_msgs::msg::Image & image);
+sensor_msgs::msg::Image to_image(
+  const std_msgs::msg::Header & header, const torch::Tensor & tensor);
+
+template <>
+struct rclcpp::TypeAdapter<
+  std::tuple<std_msgs::msg::Header, torch::Tensor>, sensor_msgs::msg::Image>
+{
+  using is_specialized = std::true_type;
+  using custom_type = std::tuple<std_msgs::msg::Header, torch::Tensor>;
+  using ros_message_type = sensor_msgs::msg::Image;
+
+  static void convert_to_ros_message(const custom_type & source, ros_message_type & destination)
+  {
+    destination = std::apply(to_image, source);
+  }
+
+  static void convert_to_custom(const ros_message_type & source, custom_type & destination)
+  {
+    destination = {source.header, to_torch_tensor(source)};
+  }
+};
 
 #endif  // TORCH_UTIL__TYPE_TYPEADAPTER_HPP_
