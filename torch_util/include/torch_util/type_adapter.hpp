@@ -19,6 +19,7 @@
 #include <torch/torch.h>
 
 #include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <torch_msgs/msg/fp32_tensor.hpp>
 #include <torch_msgs/msg/fp64_tensor.hpp>
@@ -111,21 +112,47 @@ DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT32Tensor, int32)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT64Tensor, int64)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::UINT8Tensor, uint8)
 
+torch::Tensor to_torch_tensor(const cv::Mat & image);
+cv::Mat to_cv_mat(const torch::Tensor & tensor);
+
 torch::Tensor to_torch_tensor(const sensor_msgs::msg::Image & image);
 sensor_msgs::msg::Image to_image(
   const std_msgs::msg::Header & header, const torch::Tensor & tensor);
 
+using torch_tensor_with_header = std::tuple<std_msgs::msg::Header, torch::Tensor>;
+
 template <>
-struct rclcpp::TypeAdapter<
-  std::tuple<std_msgs::msg::Header, torch::Tensor>, sensor_msgs::msg::Image>
+struct rclcpp::TypeAdapter<torch_tensor_with_header, sensor_msgs::msg::Image>
 {
   using is_specialized = std::true_type;
-  using custom_type = std::tuple<std_msgs::msg::Header, torch::Tensor>;
+  using custom_type = torch_tensor_with_header;
   using ros_message_type = sensor_msgs::msg::Image;
 
   static void convert_to_ros_message(const custom_type & source, ros_message_type & destination)
   {
     destination = std::apply(to_image, source);
+  }
+
+  static void convert_to_custom(const ros_message_type & source, custom_type & destination)
+  {
+    destination = {source.header, to_torch_tensor(source)};
+  }
+};
+
+torch::Tensor to_torch_tensor(const sensor_msgs::msg::CompressedImage & image);
+sensor_msgs::msg::CompressedImage to_compressed_image(
+  const std_msgs::msg::Header & header, const torch::Tensor & tensor);
+
+template <>
+struct rclcpp::TypeAdapter<torch_tensor_with_header, sensor_msgs::msg::CompressedImage>
+{
+  using is_specialized = std::true_type;
+  using custom_type = torch_tensor_with_header;
+  using ros_message_type = sensor_msgs::msg::CompressedImage;
+
+  static void convert_to_ros_message(const custom_type & source, ros_message_type & destination)
+  {
+    destination = std::apply(to_compressed_image, source);
   }
 
   static void convert_to_custom(const ros_message_type & source, custom_type & destination)
