@@ -47,7 +47,7 @@ bool check_shape(const TENSOR & tensor)
 }
 
 #define DEFINE_TO_TORCH_TENSOR_FUNCTION(TENSOR_MSG, DTYPE)                                       \
-  torch::Tensor to_torch_tensor(TENSOR_MSG msg)                                                  \
+  inline torch::Tensor to_torch_tensor(TENSOR_MSG msg)                                           \
   {                                                                                              \
     assert(check_shape(msg));                                                                    \
     return torch::from_blob(                                                                     \
@@ -69,7 +69,7 @@ DEFINE_TO_TORCH_TENSOR_FUNCTION(torch_msgs::msg::UINT8Tensor, torch::kUInt8)
 #undef DEFINE_TO_TORCH_TENSOR_FUNCTION
 
 #define DEFINE_TO_TENSOR_MSG_FUNCTION(MESSAGE_TYPE, DTYPE, CPP_DTYPE)                 \
-  MESSAGE_TYPE to_##DTYPE##_tensor_msg(const torch::Tensor & tensor)                  \
+  inline MESSAGE_TYPE to_##DTYPE##_tensor_msg(const torch::Tensor & tensor)           \
   {                                                                                   \
     return torch_msgs::build<MESSAGE_TYPE>()                                          \
       .is_cuda(tensor.is_cuda())                                                      \
@@ -112,6 +112,8 @@ DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT32Tensor, int32)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::INT64Tensor, int64)
 DEFINE_TYPE_ADAPTER(torch_msgs::msg::UINT8Tensor, uint8)
 
+namespace torch_util
+{
 torch::Tensor to_torch_tensor(const cv::Mat & image);
 cv::Mat to_cv_mat(const torch::Tensor & tensor);
 
@@ -121,43 +123,44 @@ sensor_msgs::msg::Image to_image(
 
 using torch_tensor_with_header = std::tuple<std_msgs::msg::Header, torch::Tensor>;
 
+torch::Tensor to_torch_tensor(const sensor_msgs::msg::CompressedImage & image);
+sensor_msgs::msg::CompressedImage to_compressed_image(
+  const std_msgs::msg::Header & header, const torch::Tensor & tensor);
+}  // namespace torch_util
+
 template <>
-struct rclcpp::TypeAdapter<torch_tensor_with_header, sensor_msgs::msg::Image>
+struct rclcpp::TypeAdapter<torch_util::torch_tensor_with_header, sensor_msgs::msg::Image>
 {
   using is_specialized = std::true_type;
-  using custom_type = torch_tensor_with_header;
+  using custom_type = torch_util::torch_tensor_with_header;
   using ros_message_type = sensor_msgs::msg::Image;
 
   static void convert_to_ros_message(const custom_type & source, ros_message_type & destination)
   {
-    destination = std::apply(to_image, source);
+    destination = std::apply(torch_util::to_image, source);
   }
 
   static void convert_to_custom(const ros_message_type & source, custom_type & destination)
   {
-    destination = {source.header, to_torch_tensor(source)};
+    destination = {source.header, torch_util::to_torch_tensor(source)};
   }
 };
 
-torch::Tensor to_torch_tensor(const sensor_msgs::msg::CompressedImage & image);
-sensor_msgs::msg::CompressedImage to_compressed_image(
-  const std_msgs::msg::Header & header, const torch::Tensor & tensor);
-
 template <>
-struct rclcpp::TypeAdapter<torch_tensor_with_header, sensor_msgs::msg::CompressedImage>
+struct rclcpp::TypeAdapter<torch_util::torch_tensor_with_header, sensor_msgs::msg::CompressedImage>
 {
   using is_specialized = std::true_type;
-  using custom_type = torch_tensor_with_header;
+  using custom_type = torch_util::torch_tensor_with_header;
   using ros_message_type = sensor_msgs::msg::CompressedImage;
 
   static void convert_to_ros_message(const custom_type & source, ros_message_type & destination)
   {
-    destination = std::apply(to_compressed_image, source);
+    destination = std::apply(torch_util::to_compressed_image, source);
   }
 
   static void convert_to_custom(const ros_message_type & source, custom_type & destination)
   {
-    destination = {source.header, to_torch_tensor(source)};
+    destination = {source.header, torch_util::to_torch_tensor(source)};
   }
 };
 
