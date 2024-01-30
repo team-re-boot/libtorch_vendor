@@ -17,6 +17,14 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/executor.cpp
 )
 
+ament_auto_add_executable(component_container_mt
+  src/component_container_mt.cpp
+)
+
+ament_auto_add_executable(component_container
+  src/component_container.cpp
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()

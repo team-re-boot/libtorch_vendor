@@ -18,6 +18,12 @@
 
 namespace torch_util
 {
+MultiThreadedExecutor::MultiThreadedExecutor() : rclcpp::executors::MultiThreadedExecutor()
+{
+  torch::set_num_threads(16);
+  torch::set_num_interop_threads(12);
+}
+
 MultiThreadedExecutor::MultiThreadedExecutor(
   const size_t torch_num_threads, const size_t torch_num_interop_threads,
   const rclcpp::ExecutorOptions & options, const size_t number_of_ros2_callback_threads)
@@ -25,6 +31,12 @@ MultiThreadedExecutor::MultiThreadedExecutor(
 {
   torch::set_num_threads(torch_num_threads);
   torch::set_num_interop_threads(torch_num_interop_threads);
+}
+
+SingleThreadedExecutor::SingleThreadedExecutor()
+{
+  torch::set_num_threads(16);
+  torch::set_num_interop_threads(12);
 }
 
 SingleThreadedExecutor::SingleThreadedExecutor(

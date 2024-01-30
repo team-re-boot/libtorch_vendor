@@ -22,6 +22,7 @@ namespace torch_util
 class MultiThreadedExecutor : public rclcpp::executors::MultiThreadedExecutor
 {
 public:
+  explicit MultiThreadedExecutor();
   explicit MultiThreadedExecutor(
     const size_t torch_num_threads, const size_t torch_num_interop_threads,
     const rclcpp::ExecutorOptions & options, const size_t number_of_ros2_callback_threads);
@@ -30,6 +31,7 @@ public:
 class SingleThreadedExecutor : public rclcpp::executors::SingleThreadedExecutor
 {
 public:
+  explicit SingleThreadedExecutor();
   explicit SingleThreadedExecutor(
     const size_t torch_num_threads, const size_t torch_num_interop_threads,
     const rclcpp::ExecutorOptions & options);
