@@ -36,6 +36,8 @@ TEST(Util, to_torch_tensor)
   EXPECT_EQ(msg.shape[1], static_cast<int64_t>(2));
 }
 
+namespace tensor_msg
+{
 using AdaptedType = rclcpp::TypeAdapter<torch::Tensor, torch_msgs::msg::FP32Tensor>;
 
 class PubNode : public rclcpp::Node
@@ -65,7 +67,7 @@ private:
   std::shared_ptr<rclcpp::Subscription<AdaptedType>> subscriber_;
 };
 
-TEST(Util, type_adapter)
+TEST(Util, type_adapter_torch_tensor)
 {
   rclcpp::init(0, nullptr);
   rclcpp::NodeOptions options;
@@ -85,6 +87,62 @@ TEST(Util, type_adapter)
   rclcpp::shutdown();
   EXPECT_TRUE(tensor_recieved);
 }
+}  // namespace tensor_msg
+
+namespace image_msg
+{
+using AdaptedType = rclcpp::TypeAdapter<torch_tensor_with_header, sensor_msgs::msg::Image>;
+
+class PubNode : public rclcpp::Node
+{
+public:
+  explicit PubNode(const rclcpp::NodeOptions & options) : Node("test", options)
+  {
+    publisher_ = create_publisher<AdaptedType>("tensor", 1);
+  }
+  void publish(const torch_tensor_with_header & tensor) { publisher_->publish(tensor); }
+
+private:
+  std::shared_ptr<rclcpp::Publisher<AdaptedType>> publisher_;
+};
+
+class SubNode : public rclcpp::Node
+{
+public:
+  explicit SubNode(
+    const rclcpp::NodeOptions & options,
+    const std::function<void(const torch_tensor_with_header &)> function)
+  : Node("test", options)
+  {
+    subscriber_ = create_subscription<AdaptedType>("tensor", 1, function);
+  }
+
+private:
+  std::shared_ptr<rclcpp::Subscription<AdaptedType>> subscriber_;
+};
+
+TEST(Util, type_adapter_image_msg)
+{
+  rclcpp::init(0, nullptr);
+  rclcpp::NodeOptions options;
+  options.use_intra_process_comms(true);
+  const auto pub_tensor = torch::zeros({100, 100, 3});
+  bool tensor_recieved = false;
+  auto sub_node = std::make_shared<SubNode>(options, [&](const torch_tensor_with_header & tensor) {
+    EXPECT_TRUE(pub_tensor.data_ptr() == std::get<1>(tensor).data_ptr());
+    tensor_recieved = true;
+  });
+  auto pub_node = std::make_shared<PubNode>(options);
+  pub_node->publish({std_msgs::msg::Header(), pub_tensor});
+  rclcpp::executors::SingleThreadedExecutor exec;
+  exec.add_node(sub_node);
+  exec.add_node(pub_node);
+  exec.spin_some();
+  rclcpp::shutdown();
+  EXPECT_TRUE(tensor_recieved);
+}
+}  // namespace image_msg
+
 }  // namespace torch_util
 
 int main(int argc, char ** argv)
