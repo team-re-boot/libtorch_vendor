@@ -14,6 +14,7 @@ include_directories(include)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/type_adapter.cpp
+  src/executor.cpp
 )
 
 if(BUILD_TESTING)
