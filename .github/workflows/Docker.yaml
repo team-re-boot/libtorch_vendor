@@ -30,7 +30,7 @@ jobs:
         if: ${{ matrix.runs_on == 'macos-14'}}
         run: |
           brew install wget
-          wget "https://desktop.docker.com/mac/main/arm64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-mac-arm64&_gl=1*aalniu*_ga*MTQ5MTgxNTA3NC4xNzA1OTE2NzEw*_ga_XJWPQMJYHQ*MTcwODAwMzc5Ni43LjEuMTcwODAwMzk0Ni41Ny4wLjA." -O Docker.app
+          wget "https://desktop.docker.com/mac/main/arm64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-mac-arm64&_gl=1*aalniu*_ga*MTQ5MTgxNTA3NC4xNzA1OTE2NzEw*_ga_XJWPQMJYHQ*MTcwODAwMzc5Ni43LjEuMTcwODAwMzk0Ni41Ny4wLjA." -O Docker.dmg
           hdiutil attach Docker.dmg
           /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
           hdiutil detach /Volumes/Docker
