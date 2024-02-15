@@ -30,10 +30,13 @@ jobs:
         if: ${{ matrix.runs_on == 'macos-14'}}
         run: |
           brew install wget
-          wget "https://desktop.docker.com/mac/main/arm64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-mac-arm64&_gl=1*aalniu*_ga*MTQ5MTgxNTA3NC4xNzA1OTE2NzEw*_ga_XJWPQMJYHQ*MTcwODAwMzc5Ni43LjEuMTcwODAwMzk0Ni41Ny4wLjA." -O Docker.dmg
-          hdiutil attach Docker.dmg
-          /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
-          hdiutil detach /Volumes/Docker
+          wget https://download.docker.com/mac/static/stable/aarch64/docker-25.0.3.tgz
+          tar -xvzf docker-25.0.3.tgz
+          cp docker/docker /usr/local/bin/
+
+      - name: Install docker for ubuntu runner
+        if: ${{ matrix.runs_on == 'ubuntu-22.04' }}
+        uses: docker/setup-buildx-action@v3
 
       - uses: actions/checkout@v3
 
@@ -44,14 +47,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push (arm64)
-        uses: docker/bake-action@v3
-        if: ${{ matrix.runs_on == 'macos-14'}}
-        with:
-          files: |
-            ./docker-bake.hcl
-          workdir: .
-          no-cache: true
-          push: ${{ github.event_name != 'pull_request' }}
-          set: |
-            *.platform=linux/arm64/v8
+      - name: Build docker image
+        run: docker run -it --rm docker.io/hakuturu583/libtorch_vendor:build .
