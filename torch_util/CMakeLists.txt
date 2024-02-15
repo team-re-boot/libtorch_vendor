@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
+find_package(cv_bridge REQUIRED) # If delete this line, this package cannot build in Jetson Orin AGX
 ament_auto_find_build_dependencies()
 # find_package(CUDA)
 
