@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 720
     strategy:
       matrix:
-        runs_on: [ubuntu-22.04, macos-14] # macos-14 is added for arm support. See also https://x.com/github/status/1752458943245189120?s=20
+        runs_on: [macos-14] # macos-14 is added for arm support. See also https://x.com/github/status/1752458943245189120?s=20
     steps:
       - name: Install docker for mac runner
         if: ${{ matrix.runs_on == 'macos-14'}}
@@ -35,10 +35,6 @@ jobs:
           /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
           hdiutil detach /Volumes/Docker
 
-      - name: Install docker for ubuntu runner
-        if: ${{ matrix.runs_on == 'ubuntu-22.04' }}
-        uses: docker/setup-buildx-action@v3
-
       - uses: actions/checkout@v3
 
       - name: Login to GitHub Container Registry
@@ -47,18 +43,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push (amd64)
-        uses: docker/bake-action@v3
-        if: ${{ matrix.runs_on == 'ubuntu-22.04' }}
-        with:
-          files: |
-            ./docker-bake.hcl
-          workdir: .
-          no-cache: true
-          push: ${{ github.event_name != 'pull_request' }}
-          set: |
-            *.platform=linux/amd64
 
       - name: Build and push (arm64)
         uses: docker/bake-action@v3
