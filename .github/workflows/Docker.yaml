@@ -48,4 +48,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build docker image
-        run: docker run -it --rm docker.io/hakuturu583/libtorch_vendor:build .
+        run: docker build -t docker.io/hakuturu583/libtorch_vendor:build .
