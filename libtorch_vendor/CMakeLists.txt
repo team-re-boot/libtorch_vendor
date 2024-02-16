@@ -31,7 +31,9 @@ if(CUDA_FOUND)
   if(JETSON_ORIN)
     set(CMAKE_ARGS
       ${CMAKE_ARGS}
-      -DCMAKE_CXX_FLAGS="-march=armv8.2-a -mtune=cortex-a78ae -mcpu=cortex-a78ae"
+      add_compile_options(-march=armv8.2-a)
+      add_compile_options(-mtune=cortex-a78ae)
+      add_compile_options(-mcpu=cortex-a78ae)
       -DDNNL_TARGET_ARCH="AARCH64"
     )
   endif()
