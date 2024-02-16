@@ -33,7 +33,7 @@ if(CUDA_FOUND)
       ${CMAKE_ARGS}
       -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} "-march=armv8.2-a -mtune=cortex-a78ae -mcpu=cortex-a78ae"
     )
-  else()
+  endif()
 else()
   set(CMAKE_ARGS 
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
