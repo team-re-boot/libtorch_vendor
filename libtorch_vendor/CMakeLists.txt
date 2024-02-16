@@ -33,7 +33,7 @@ if(CUDA_FOUND)
       ${CMAKE_ARGS}
       add_compile_options(-march=armv8.2-a)
       add_compile_options(-mtune=cortex-a78ae)
-      add_compile_options(-mcpu=cortex-a78ae)
+      # add_compile_options(-mcpu=cortex-a78ae)
       -DDNNL_TARGET_ARCH="AARCH64"
     )
   endif()
