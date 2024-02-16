@@ -9,6 +9,8 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 find_package(CUDA)
 
+option(JETSON_ORIN "add march option for jetson orin" OFF)
+
 if(CUDA_FOUND)
   message("CUDA version: " ${CUDA_VERSION})
   message("CUDA toolkig root directory : " ${CUDA_TOOLKIT_ROOT_DIR})
@@ -26,6 +28,12 @@ if(CUDA_FOUND)
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
     -DUSE_NATIVE_ARCH=OFF
     -DCMAKE_CUDA_COMPILER=${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
+  if(JETSON_ORIN)
+    set(CMAKE_ARGS
+      ${CMAKE_ARGS}
+      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} "-march=armv8.2-a -mtune=cortex-a78ae -mcpu=cortex-a78ae"
+    )
+  else()
 else()
   set(CMAKE_ARGS 
     -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
