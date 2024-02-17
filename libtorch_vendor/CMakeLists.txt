@@ -29,8 +29,8 @@ if(CUDA_FOUND)
     -DUSE_NATIVE_ARCH=OFF
     -DCMAKE_CUDA_COMPILER=${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
   if(JETSON_ORIN)
-    set(CMAKE_C_FLAGS -march=armv8.2-a -mtune=cortex-a78ae) #-mcpu=cortex-a78ae)
-    set(CMAKE_CXX_FLAGS=-march=armv8.2-a -mtune=cortex-a78ae) # -mcpu=cortex-a78ae)
+    set(CMAKE_C_FLAGS -march=armv8.2-a -mtune=cortex-a78ae-mcpu=cortex-a78ae)
+    set(CMAKE_CXX_FLAGS -march=armv8.2-a -mtune=cortex-a78ae -mcpu=cortex-a78ae)
     set(CMAKE_ARGS
       ${CMAKE_ARGS}
       # add_compile_options(-march=armv8.2-a)
