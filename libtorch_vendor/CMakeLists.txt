@@ -16,42 +16,42 @@ if(CUDA_FOUND)
   message("CUDA toolkig root directory : " ${CUDA_TOOLKIT_ROOT_DIR})
   message("TORCH_CUDA_ARCH_LIST : " $ENV{TORCH_CUDA_ARCH_LIST})
   set($ENV{USE_DISTRIBUTED} 1)
-  set(CMAKE_ARGS 
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
-    -DBUILD_SHARED_LIBS=ON 
-    -DUSE_CUDA=ON
-    -DUSE_CUDNN=ON
-    -DUSE_MKLDNN=ON
-    -DUSE_NCCL=OFF
-    -DBUILD_PYTHON=OFF
-    -DBUILD_CUSTOM_PROTOBUF=OFF
-    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-    -DUSE_NATIVE_ARCH=OFF
+  set(CMAKE_ARGS
+    -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install;
+    -DBUILD_SHARED_LIBS=ON;
+    -DUSE_CUDA=ON;
+    -DUSE_CUDNN=ON;
+    -DUSE_MKLDNN=ON;
+    -DUSE_NCCL=OFF;
+    -DBUILD_PYTHON=OFF;
+    -DBUILD_CUSTOM_PROTOBUF=OFF;
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON;
+    -DUSE_NATIVE_ARCH=OFF;
     -DCMAKE_CUDA_COMPILER=${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)
   if(JETSON_ORIN)
-    set(CMAKE_C_FLAGS -march=armv8.2-a -mtune=cortex-a78ae -mcpu=cortex-a78ae)
-    set(CMAKE_CXX_FLAGS -march=armv8.2-a -mtune=cortex-a78ae -mcpu=cortex-a78ae)
+    set(CMAKE_C_FLAGS -march=armv8.2-a;-mtune=cortex-a78ae;-mcpu=cortex-a78ae)
+    set(CMAKE_CXX_FLAGS -march=armv8.2-a;-mtune=cortex-a78ae;-mcpu=cortex-a78ae)
     set(CMAKE_ARGS
       ${CMAKE_ARGS}
       # add_compile_options(-march=armv8.2-a)
       # add_compile_options(-mtune=cortex-a78ae)
       # add_compile_options(-mcpu=cortex-a78ae)
-      -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+      -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS};
+      -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS};
       -DDNNL_TARGET_ARCH=AARCH64
     )
   endif()
 else()
   set(CMAKE_ARGS 
-    -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install
-    -DBUILD_SHARED_LIBS=ON 
-    -DUSE_CUDA=OFF
-    -DUSE_CUDNN=OFF
-    -DUSE_MKLDNN=ON
-    -DUSE_NCCL=OFF
-    -DBUILD_PYTHON=OFF
-    -DBUILD_CUSTOM_PROTOBUF=OFF
-    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+    -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install;
+    -DBUILD_SHARED_LIBS=ON;
+    -DUSE_CUDA=OFF;
+    -DUSE_CUDNN=OFF;
+    -DUSE_MKLDNN=ON;
+    -DUSE_NCCL=OFF;
+    -DBUILD_PYTHON=OFF;
+    -DBUILD_CUSTOM_PROTOBUF=OFF;
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON;
     -DUSE_NATIVE_ARCH=OFF)
 endif()
 
