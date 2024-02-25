@@ -8,6 +8,8 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 find_package(CUDA)
+find_package(CUDNN)
+find_package(TENSORRT)
 
 if(CUDA_FOUND)
   message("CUDA version: " ${CUDA_VERSION})
@@ -44,11 +46,21 @@ include(ExternalProject)
 message("CMake arguments : " ${CMAKE_ARGS})
 externalproject_add(libtorch-ext
   GIT_REPOSITORY https://github.com/pytorch/pytorch.git
-  GIT_TAG v2.1.0
+  GIT_TAG v2.2.0
   GIT_SUBMODULES_RECURSE TRUE
   CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_COMMAND make -j24
 )
+
+if(${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND})
+  message("CUDA/cudnn/TensorRT found.")
+  externalproject_add(libtorch-ext
+    GIT_REPOSITORY https://github.com/pytorch/TensorRT.git
+    GIT_TAG v2.2.0
+    GIT_SUBMODULES_RECURSE TRUE
+    BUILD_COMMAND make -j24
+  )
+endif()
 
 install(
   DIRECTORY
@@ -63,6 +75,15 @@ ament_export_include_directories(include/torch/csrc/api/include)
 if(CUDA_FOUND)
   ament_export_libraries(c10_cuda)
   ament_export_libraries(tensorpipe_cuda)
+  ament_export_dependencies(CUDA)
+endif()
+
+if(CUDNN_FOUND)
+  ament_export_dependencies(CUDNN)
+endif()
+
+if(TENSORRT_FOUND)
+  ament_export_dependencies(TENSORRT)
 endif()
 
 ament_export_libraries(asmjit)
@@ -86,6 +107,10 @@ ament_export_libraries(torch_cuda)
 ament_export_libraries(torch_global_deps)
 ament_export_libraries(torch)
 ament_export_libraries(XNNPACK)
+
+ament_export_dependencies(cudnn_cmake_module)
+ament_export_dependencies(tensorrt_cmake_module)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
