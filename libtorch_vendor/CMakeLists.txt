@@ -46,7 +46,7 @@ include(ExternalProject)
 message("CMake arguments : " ${CMAKE_ARGS})
 externalproject_add(libtorch-ext
   GIT_REPOSITORY https://github.com/pytorch/pytorch.git
-  GIT_TAG v2.2.0
+  GIT_TAG v2.2.0 -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_install;
   GIT_SUBMODULES_RECURSE TRUE
   CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_COMMAND make -j24
@@ -54,10 +54,11 @@ externalproject_add(libtorch-ext
 
 if(${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND})
   message("CUDA/cudnn/TensorRT found.")
-  externalproject_add(libtorch-ext
+  externalproject_add(libtorch-tensorrt-ext
     GIT_REPOSITORY https://github.com/pytorch/TensorRT.git
     GIT_TAG v2.2.0
     GIT_SUBMODULES_RECURSE TRUE
+    CMAKE_ARGS 
     BUILD_COMMAND make -j24
   )
 endif()
