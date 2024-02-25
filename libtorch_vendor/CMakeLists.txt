@@ -8,8 +8,6 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 find_package(CUDA)
-find_package(CUDNN)
-find_package(TENSORRT)
 
 if(CUDA_FOUND)
   message("CUDA version: " ${CUDA_VERSION})
@@ -51,17 +49,6 @@ externalproject_add(libtorch-ext
   CMAKE_ARGS ${CMAKE_ARGS}
   BUILD_COMMAND make -j24
 )
-
-if(${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND})
-  message("CUDA/cudnn/TensorRT found.")
-  externalproject_add(libtorch-tensorrt-ext
-    GIT_REPOSITORY https://github.com/pytorch/TensorRT.git
-    GIT_TAG v2.2.0
-    GIT_SUBMODULES_RECURSE TRUE
-    CMAKE_ARGS 
-    BUILD_COMMAND make -j24
-  )
-endif()
 
 install(
   DIRECTORY
