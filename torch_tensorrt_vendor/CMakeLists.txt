@@ -8,26 +8,20 @@ endif()
 # find dependencies
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
-find_package(CUDA)
-find_package(CUDNN)
-find_package(TENSORRT)
 
-if(${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND})
+find_package(CUDA REQUIRED)
+find_package(CUDNN REQUIRED)
+find_package(TENSORRT REQUIRED)
+
+if(NOT (${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND}))
+  message(WARNING "cuda, cudnn, tensorrt libraries are not found")
+  return()
+else()
   message("CUDA/cudnn/TensorRT found.")
   ament_vendor(${PROJECT_NAME}
     VCS_URL https://github.com/pytorch/TensorRT.git
     VCS_VERSION v2.2.0
   )
-else()
-  if(NOT ${CUDA_FOUND})
-    message(FATAL_ERROR "CUDA not found.")
-  endif()
-  if(NOT ${CUDNN_FOUND})
-    message(FATAL_ERROR "cudnn not found.")
-  endif()
-  if(NOT ${TENSORRT_FOUND})
-    message(FATAL_ERROR "TensorRT not found.")
-  endif()
 endif()
 
 if(BUILD_TESTING)
