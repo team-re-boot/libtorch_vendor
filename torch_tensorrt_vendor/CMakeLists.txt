@@ -13,6 +13,10 @@ find_package(CUDA REQUIRED)
 find_package(TENSORRT)
 # find_package(CUDNN)
 
+if(TENSORRT_FOUND)
+  message("TensorRT found at " ${TENSORRT_INCLUDE_DIR})
+else()
+
 ament_vendor(${PROJECT_NAME}
   VCS_URL https://github.com/pytorch/TensorRT.git
   VCS_VERSION v2.2.0
