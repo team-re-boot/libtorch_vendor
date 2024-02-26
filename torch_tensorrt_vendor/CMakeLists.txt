@@ -10,17 +10,11 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 find_package(CUDA REQUIRED)
-find_package(TENSORRT)
-# find_package(CUDNN)
-
-if(TENSORRT_FOUND)
-  message("TensorRT found at " ${TENSORRT_INCLUDE_DIR})
-else()
-endif()
 
 ament_vendor(${PROJECT_NAME}
   VCS_URL https://github.com/pytorch/TensorRT.git
   VCS_VERSION v2.2.0
+  CMAKE_ARGS -DTensorRT_ROOT=/usr/include/aarch64-linux-gnu
 )
 
 if(BUILD_TESTING)
