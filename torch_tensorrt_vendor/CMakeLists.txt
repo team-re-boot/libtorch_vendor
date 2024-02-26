@@ -16,6 +16,7 @@ find_package(TENSORRT)
 if(TENSORRT_FOUND)
   message("TensorRT found at " ${TENSORRT_INCLUDE_DIR})
 else()
+endif()
 
 ament_vendor(${PROJECT_NAME}
   VCS_URL https://github.com/pytorch/TensorRT.git
