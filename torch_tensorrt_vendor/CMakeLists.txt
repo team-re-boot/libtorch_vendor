@@ -10,6 +10,8 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 find_package(CUDA REQUIRED)
+find_package(TENSORRT)
+# find_package(CUDNN)
 
 ament_vendor(${PROJECT_NAME}
   VCS_URL https://github.com/pytorch/TensorRT.git
