@@ -14,7 +14,7 @@ find_package(CUDA REQUIRED)
 ament_vendor(${PROJECT_NAME}
   VCS_URL https://github.com/pytorch/TensorRT.git
   VCS_VERSION v2.2.0
-  CMAKE_ARGS -DTensorRT_ROOT=/usr/include/aarch64-linux-gnu
+  CMAKE_ARGS -DTensorRT_ROOT=/usr/include/aarch64-linux-gnu;/usr/lib
 )
 
 if(BUILD_TESTING)
