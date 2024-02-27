@@ -11,11 +11,16 @@ ament_auto_find_build_dependencies()
 
 find_package(CUDA REQUIRED)
 
-ament_vendor(${PROJECT_NAME}
-  VCS_URL https://github.com/pytorch/TensorRT.git
-  VCS_VERSION v2.2.0
-  CMAKE_ARGS -DTensorRT_ROOT=/usr/include/aarch64-linux-gnu;/usr/lib
-)
+# In jetson, /usr/include/aarch64-linux-gnu;/usr/lib
+set(TENSORRT_ROOT $ENV{TENSORRT_ROOT})
+
+if(NOT ${TENSORRT_ROOT} STREQUAL "")
+  ament_vendor(${PROJECT_NAME}
+    VCS_URL https://github.com/pytorch/TensorRT.git
+    VCS_VERSION v2.2.0
+    CMAKE_ARGS -DTensorRT_ROOT=${TENSORRT_ROOT}
+  )
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

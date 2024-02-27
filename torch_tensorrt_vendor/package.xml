@@ -8,8 +8,6 @@
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  <buildtool_depend>cudnn_cmake_module</buildtool_depend>
-  <buildtool_depend>tensorrt_cmake_module</buildtool_depend>
 
   <build_depend>libtorch_vendor</build_depend>
   <build_depend>ament_cmake_vendor_package</build_depend>
