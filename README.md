@@ -18,3 +18,8 @@ For example, if you use jetson agx orin, run command below.
 ```
 export TORCH_CUDA_ARCH_LIST=8.7
 ```
+
+## Run with TensorRT
+
+This package integrates [PyTorch TensorRT plugin.](https://github.com/pytorch/TensorRT)
+If you want to use this, install TensorRT and set `TENSORRT_ROOT` environment variable.
