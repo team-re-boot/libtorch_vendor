@@ -11,7 +11,7 @@
 
   <build_depend>ament_cmake_auto</build_depend>
 
-  <depend version_eq="4.4.0">python3-typing-extensions</depend>
+  <depend>python3-pip</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ouxt_lint_common</test_depend>
