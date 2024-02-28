@@ -47,7 +47,7 @@ externalproject_add(libtorch-ext
   GIT_TAG v2.2.0
   GIT_SUBMODULES_RECURSE TRUE
   CMAKE_ARGS ${CMAKE_ARGS}
-  BUILD_COMMAND pip3 install typing-extensions==4.10.0 && make -j24
+  BUILD_COMMAND pip3 install typing-extensions==4.10.0 && make -j12
 )
 
 install(
@@ -79,7 +79,6 @@ ament_export_libraries(c10)
 ament_export_libraries(caffe2_nvrtc)
 ament_export_libraries(clog)
 ament_export_libraries(cpuinfo)
-ament_export_libraries(dnnl)
 ament_export_libraries(fbgemm)
 ament_export_libraries(fmt)
 ament_export_libraries(kineto)
