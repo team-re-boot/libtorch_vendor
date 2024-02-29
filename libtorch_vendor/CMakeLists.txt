@@ -79,7 +79,6 @@ ament_export_libraries(c10)
 ament_export_libraries(caffe2_nvrtc)
 ament_export_libraries(clog)
 ament_export_libraries(cpuinfo)
-ament_export_libraries(fbgemm)
 ament_export_libraries(fmt)
 ament_export_libraries(kineto)
 ament_export_libraries(nnpack)
@@ -94,9 +93,6 @@ ament_export_libraries(torch_cuda)
 ament_export_libraries(torch_global_deps)
 ament_export_libraries(torch)
 ament_export_libraries(XNNPACK)
-
-ament_export_dependencies(cudnn_cmake_module)
-ament_export_dependencies(tensorrt_cmake_module)
 
 
 if(BUILD_TESTING)
