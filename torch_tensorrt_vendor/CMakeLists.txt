@@ -11,7 +11,7 @@ ament_auto_find_build_dependencies()
 
 find_package(CUDA REQUIRED)
 
-# In jetson, /usr/include/aarch64-linux-gnu;/usr/lib
+# In jetson, /usr
 set(TENSORRT_ROOT $ENV{TENSORRT_ROOT})
 
 if(${TENSORRT_ROOT})
