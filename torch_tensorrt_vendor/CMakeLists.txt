@@ -21,7 +21,7 @@ if(${TENSORRT_ROOT})
     CMAKE_ARGS -DTensorRT_ROOT=${TENSORRT_ROOT}
   )
 else()
-  message(FATAL_ERROR "TensorRT not found, skip building " ${PROJECT_NAME})
+  message("TensorRT not found, skip building " ${PROJECT_NAME})
 endif()
 
 if(BUILD_TESTING)
