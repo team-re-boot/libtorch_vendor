@@ -18,3 +18,11 @@ For example, if you use jetson agx orin, run command below.
 ```
 export TORCH_CUDA_ARCH_LIST=8.7
 ```
+
+## CUDA / LibTorch version
+
+| CUDA            | LibTorch      |
+|-----------------|---------------|
+| < 12.0          | not supported |
+| 12.0 <=, < 12.4 | v2.1.0        |
+| 12.4 <=         | v2.6.0        |
