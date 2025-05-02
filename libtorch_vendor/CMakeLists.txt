@@ -42,13 +42,33 @@ endif()
 
 include(ExternalProject)
 message("CMake arguments : " ${CMAKE_ARGS})
-externalproject_add(libtorch-ext
-  GIT_REPOSITORY https://github.com/pytorch/pytorch.git
-  GIT_TAG v2.1.0
-  GIT_SUBMODULES_RECURSE TRUE
-  CMAKE_ARGS ${CMAKE_ARGS}
-  BUILD_COMMAND make -j24
-)
+
+# See also https://pytorch.org/get-started/previous-versions/
+if (CUDA_VERSION VERSION_LESS 12.0)
+  message(FATAL_ERROR "CUDA version is less than 12.0, please use CUDA 12.0 or higher.")
+endif()
+
+if (CUDA_VERSION VERSION_GREATER_EQUAL 12.1 AND CUDA_VERSION VERSION_LESS 12.4)
+  message(STATUS "CUDA version is between 12.1 and 12.4, using libtorch v2.1.0.")
+  externalproject_add(libtorch-ext
+    GIT_REPOSITORY https://github.com/pytorch/pytorch.git
+    GIT_TAG v2.1.0
+    GIT_SUBMODULES_RECURSE TRUE
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND make -j12
+  )
+endif()
+
+if (CUDA_VERSION VERSION_GREATER_EQUAL 12.4)
+  message(STATUS "CUDA version is 12.4 or higher, using libtorch v2.6.0.")
+  externalproject_add(libtorch-ext
+    GIT_REPOSITORY https://github.com/pytorch/pytorch.git
+    GIT_TAG v2.6.0
+    GIT_SUBMODULES_RECURSE TRUE
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND make -j12
+  )
+endif()
 
 install(
   DIRECTORY
