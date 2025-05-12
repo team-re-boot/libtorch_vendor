@@ -46,16 +46,16 @@ bool check_shape(const TENSOR & tensor)
   }
 }
 
-#define DEFINE_TO_TORCH_TENSOR_FUNCTION(TENSOR_MSG, DTYPE)                                       \
-  inline torch::Tensor to_torch_tensor(TENSOR_MSG msg)                                           \
-  {                                                                                              \
-    assert(check_shape(msg));                                                                    \
-    return torch::from_blob(                                                                     \
-             msg.data.data(), torch::ArrayRef<int64_t>(msg.shape.data(), msg.shape.size()),      \
-             torch::TensorOptions().dtype(DTYPE).device([&] {                                    \
-               return (msg.is_cuda && torch::cuda::is_available()) ? torch::kCUDA : torch::kCPU; \
-             }()))                                                                               \
-      .clone();                                                                                  \
+#define DEFINE_TO_TORCH_TENSOR_FUNCTION(TENSOR_MSG, DTYPE)                                  \
+  inline torch::Tensor to_torch_tensor(TENSOR_MSG msg)                                      \
+  {                                                                                         \
+    assert(check_shape(msg));                                                               \
+    return torch::from_blob(                                                                \
+             msg.data.data(), torch::ArrayRef<int64_t>(msg.shape.data(), msg.shape.size())) \
+      .to([msg] {                                                                           \
+        return (msg.is_cuda && torch::cuda::is_available()) ? torch::kCUDA : torch::kCPU;   \
+      }())                                                                                  \
+      .clone();                                                                             \
   }
 
 DEFINE_TO_TORCH_TENSOR_FUNCTION(torch_msgs::msg::FP32Tensor, torch::kFloat32)
