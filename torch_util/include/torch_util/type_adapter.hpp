@@ -68,15 +68,19 @@ DEFINE_TO_TORCH_TENSOR_FUNCTION(torch_msgs::msg::UINT8Tensor, torch::kUInt8)
 
 #undef DEFINE_TO_TORCH_TENSOR_FUNCTION
 
-#define DEFINE_TO_TENSOR_MSG_FUNCTION(MESSAGE_TYPE, DTYPE, CPP_DTYPE)                 \
-  inline MESSAGE_TYPE to_##DTYPE##_tensor_msg(const torch::Tensor & tensor)           \
-  {                                                                                   \
-    return torch_msgs::build<MESSAGE_TYPE>()                                          \
-      .is_cuda(tensor.is_cuda())                                                      \
-      .data(std::vector<CPP_DTYPE>(                                                   \
-        tensor.data_ptr<CPP_DTYPE>(), tensor.data_ptr<CPP_DTYPE>() + tensor.numel())) \
-      .shape(std::vector<int64_t>(tensor.sizes().begin(), tensor.sizes().end()));     \
+#define DEFINE_TO_TENSOR_MSG_FUNCTION(MESSAGE_TYPE, DTYPE, CPP_DTYPE)                              \
+  inline MESSAGE_TYPE to_##DTYPE##_tensor_msg(const torch::Tensor & tensor_in)                     \
+  {                                                                                                \
+    torch::Tensor tensor = tensor_in.contiguous().to(torch::kCPU);                                 \
+    tensor.reshape({tensor.numel()});                                                              \
+    int64_t size = tensor.numel();                                                                 \
+    return torch_msgs::build<MESSAGE_TYPE>()                                                       \
+      .is_cuda(tensor_in.is_cuda())                                                                \
+      .data(                                                                                       \
+        std::vector<CPP_DTYPE>(tensor.data_ptr<CPP_DTYPE>(), tensor.data_ptr<CPP_DTYPE>() + size)) \
+      .shape(std::vector<int64_t>(tensor.sizes().begin(), tensor.sizes().end()));                  \
   }
+
 DEFINE_TO_TENSOR_MSG_FUNCTION(torch_msgs::msg::FP32Tensor, fp32, float)
 DEFINE_TO_TENSOR_MSG_FUNCTION(torch_msgs::msg::FP64Tensor, fp64, double)
 DEFINE_TO_TENSOR_MSG_FUNCTION(torch_msgs::msg::INT8Tensor, int8, int8_t)
