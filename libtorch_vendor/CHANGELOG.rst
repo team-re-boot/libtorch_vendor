@@ -2,8 +2,8 @@
 Changelog for package libtorch_vendor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2025-05-21)
+------------------
 * Merge pull request `#6 <https://github.com/team-re-boot/libtorch_vendor/issues/6>`_ from team-re-boot/feature/support_multiple_version_libtorch
   enable build libtorch with multiple version
 * enable build libtorch with multiple version

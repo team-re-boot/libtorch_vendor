@@ -2,8 +2,8 @@
 Changelog for package torch_util
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.0.1 (2025-05-21)
+------------------
 * add description
 * Merge pull request `#7 <https://github.com/team-re-boot/libtorch_vendor/issues/7>`_ from team-re-boot/fix/modify_device_transport
   Fix type adapter
