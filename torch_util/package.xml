@@ -3,7 +3,7 @@
 <package format="3">
   <name>torch_util</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Utility tools for LibTorch and ROS 2.</description>
   <maintainer email="ms.kataoka@gmail.com">masaya</maintainer>
   <license>Apache-2.0</license>
 
